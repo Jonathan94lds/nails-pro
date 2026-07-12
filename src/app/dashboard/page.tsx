@@ -7,14 +7,41 @@ import { useRouter } from 'next/navigation'
 export default function DashboardPage() {
   const [empresa, setEmpresa] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
+  const [esAdmin, setEsAdmin] = useState(false)
   const router = useRouter()
+
+  const ADMIN_EMAIL = 'jonathan94lds@hotmail.com'
 
   useEffect(() => {
     const cargarEmpresa = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data } = await supabase.from('empresas').select('*').eq('id', user.id).single()
-      setEmpresa(data)
+
+      setEsAdmin(user.email === ADMIN_EMAIL)
+
+      const { data } = await supabase
+        .from('empresas')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (data) {
+        setEmpresa(data)
+
+        if (data.fecha_vencimiento) {
+          const hoy = new Date()
+          const vence = new Date(data.fecha_vencimiento)
+          const diff = Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
+          setDiasRestantes(diff)
+        }
+
+        if (data.bloqueado) {
+          router.push('/bloqueado')
+          return
+        }
+      }
+
       setLoading(false)
     }
     cargarEmpresa()
@@ -40,6 +67,21 @@ export default function DashboardPage() {
     { icon: '🧾', titulo: 'Facturar', descripcion: 'Citas de hoy', ruta: '/facturacion', color: 'bg-orange-50', iconBg: 'bg-orange-100' },
   ]
 
+  const getAlertaColor = () => {
+    if (diasRestantes === null) return ''
+    if (diasRestantes <= 0) return 'bg-red-500'
+    if (diasRestantes <= 1) return 'bg-red-400'
+    if (diasRestantes <= 2) return 'bg-orange-400'
+    return 'bg-yellow-400'
+  }
+
+  const getAlertaMensaje = () => {
+    if (diasRestantes === null) return ''
+    if (diasRestantes <= 0) return '🔴 Tu suscripción ha vencido. Contacta al administrador para renovar.'
+    if (diasRestantes === 1) return '⚠️ Tu suscripción vence mañana. Contacta al administrador para renovar.'
+    return `⚠️ Tu suscripción vence en ${diasRestantes} días. Contacta al administrador para renovar.`
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
@@ -58,6 +100,29 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Alerta de vencimiento */}
+      {diasRestantes !== null && diasRestantes <= 3 && (
+        <div className={`${getAlertaColor()} mx-4 mt-4 rounded-3xl p-4 text-white`}>
+          <p className="font-semibold text-sm">{getAlertaMensaje()}</p>
+        </div>
+      )}
+
+      {/* Banner admin */}
+      {esAdmin && (
+        <div
+          onClick={() => router.push('/admin')}
+          className="mx-4 mt-4 bg-gray-900 rounded-3xl p-4 text-white cursor-pointer active:scale-95 transition-all"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-bold text-sm">Panel de Administrador</p>
+              <p className="text-gray-400 text-xs mt-1">Gestionar suscriptores</p>
+            </div>
+            <span className="text-2xl">⚙️</span>
+          </div>
+        </div>
+      )}
 
       <div className="px-6 py-6">
         <h2 className="text-lg font-bold text-gray-800 mb-4">Menú principal</h2>
