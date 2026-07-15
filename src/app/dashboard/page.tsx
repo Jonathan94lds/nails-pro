@@ -8,23 +8,21 @@ export default function DashboardPage() {
   const [empresa, setEmpresa] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
-  const [esAdmin, setEsAdmin] = useState(false)
+ const [esAdmin, setEsAdmin] = useState(false)
   const router = useRouter()
-
-  const ADMIN_EMAIL = 'jonathan94lds@hotmail.com'
 
   useEffect(() => {
     const cargarEmpresa = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      setEsAdmin(user.email === ADMIN_EMAIL)
-
       const { data } = await supabase
         .from('empresas')
         .select('*')
         .eq('id', user.id)
         .single()
+
+      setEsAdmin(data?.es_admin || false)
 
       if (data) {
         setEmpresa(data)

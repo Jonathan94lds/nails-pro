@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+function fechaHoy() {
+  return new Date().toISOString().split('T')[0]
+}
+
 export default function CitasPage() {
   const [citas, setCitas] = useState<any[]>([])
   const [clientes, setClientes] = useState<any[]>([])
@@ -15,6 +19,8 @@ export default function CitasPage() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [fechaFiltro, setFechaFiltro] = useState(fechaHoy())
+  const [verTodasPendientes, setVerTodasPendientes] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -24,13 +30,11 @@ export default function CitasPage() {
   const cargarDatos = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
-
     const [{ data: citasData }, { data: clientesData }, { data: serviciosData }] = await Promise.all([
       supabase.from('citas').select('*, clientes(nombre)').eq('empresa_id', user.id).order('fecha_inicio'),
       supabase.from('clientes').select('*').eq('empresa_id', user.id).order('nombre'),
       supabase.from('servicios').select('*').eq('empresa_id', user.id).eq('activo', true).order('nombre')
     ])
-
     setCitas(citasData || [])
     setClientes(clientesData || [])
     setServicios(serviciosData || [])
@@ -56,10 +60,8 @@ export default function CitasPage() {
     }
     setLoading(true)
     setError('')
-
     const { data: { user } } = await supabase.auth.getUser()
     const { valorTotal, duracionTotal } = calcularTotales()
-
     const fechaInicio = new Date(`${fecha}T${hora}`)
     const fechaFin = new Date(fechaInicio.getTime() + duracionTotal * 60000)
 
@@ -134,6 +136,14 @@ export default function CitasPage() {
     }
   }
 
+  const citasDelDia = citas.filter(c => c.fecha_inicio.split('T')[0] === fechaFiltro)
+
+  const citasPendientesFuturas = citas
+    .filter(c => c.estado === 'pendiente' && c.fecha_inicio.split('T')[0] >= fechaHoy())
+    .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio))
+
+  const citasMostradas = verTodasPendientes ? citasPendientesFuturas : citasDelDia
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
@@ -144,7 +154,7 @@ export default function CitasPage() {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Citas</h1>
-              <p className="text-gray-400 text-sm">{citas.length} citas</p>
+              <p className="text-gray-400 text-sm">{citasMostradas.length} citas</p>
             </div>
           </div>
           <button
@@ -159,7 +169,6 @@ export default function CitasPage() {
       {mostrarForm && (
         <div className="mx-4 mt-4 bg-white rounded-3xl shadow-sm p-5 space-y-4">
           <h2 className="font-bold text-gray-800">Nueva cita</h2>
-
           <div>
             <label className="text-sm font-semibold text-gray-600 mb-1 block">Cliente</label>
             <select
@@ -171,7 +180,6 @@ export default function CitasPage() {
               {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
           </div>
-
           <div>
             <label className="text-sm font-semibold text-gray-600 mb-2 block">Servicios</label>
             <div className="space-y-2">
@@ -192,13 +200,11 @@ export default function CitasPage() {
               ))}
             </div>
           </div>
-
           {serviciosSeleccionados.length > 0 && (
             <div className="bg-teal-50 rounded-2xl p-4">
               <p className="text-teal-700 font-semibold text-sm">Total: ${valorTotal.toLocaleString()} · {duracionTotal} min</p>
             </div>
           )}
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-semibold text-gray-600 mb-1 block">Fecha</label>
@@ -219,9 +225,7 @@ export default function CitasPage() {
               />
             </div>
           </div>
-
           {error && <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-2xl">{error}</div>}
-
           <div className="flex gap-3">
             <button onClick={() => setMostrarForm(false)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold">
               Cancelar
@@ -233,17 +237,54 @@ export default function CitasPage() {
         </div>
       )}
 
+      <div className="px-4 pt-4 space-y-3">
+        {!verTodasPendientes && (
+          <div>
+            <label className="text-sm font-semibold text-gray-600 mb-1 block">Ver citas del día</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={fechaFiltro}
+                onChange={(e) => setFechaFiltro(e.target.value)}
+                className="flex-1 bg-white border border-gray-100 rounded-2xl px-4 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+              />
+              {fechaFiltro !== fechaHoy() && (
+                <button
+                  onClick={() => setFechaFiltro(fechaHoy())}
+                  className="bg-teal-400 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-sm whitespace-nowrap"
+                >
+                  Hoy
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setVerTodasPendientes(!verTodasPendientes)}
+          className={`w-full py-3 rounded-2xl font-semibold text-sm shadow-sm transition-colors ${
+            verTodasPendientes ? 'bg-purple-500 text-white' : 'bg-white text-purple-500 border border-purple-200'
+          }`}
+        >
+          {verTodasPendientes ? '← Volver a ver por fecha' : 'Ver todas las pendientes'}
+        </button>
+      </div>
+
       <div className="px-4 py-4 space-y-3">
-        {citas.length === 0 ? (
+        {citasMostradas.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-teal-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
               <span className="text-4xl">📅</span>
             </div>
-            <p className="text-gray-800 font-semibold">Sin citas aún</p>
-            <p className="text-gray-400 text-sm mt-1">Toca + para agendar tu primera cita</p>
+            <p className="text-gray-800 font-semibold">
+              {verTodasPendientes ? 'Sin citas pendientes' : 'Sin citas en esta fecha'}
+            </p>
+            <p className="text-gray-400 text-sm mt-1">
+              {verTodasPendientes ? 'No hay citas pendientes desde hoy en adelante' : 'Elige otra fecha o agenda una nueva cita'}
+            </p>
           </div>
         ) : (
-          citas.map((cita) => (
+          citasMostradas.map((cita) => (
             <div key={cita.id} className="bg-white rounded-3xl px-5 py-4 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>

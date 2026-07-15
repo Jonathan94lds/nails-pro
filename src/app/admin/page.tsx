@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
-const ADMIN_EMAIL = 'jonathan94lds@hotmail.com'
-
 export default function AdminPage() {
   const [usuarios, setUsuarios] = useState<any[]>([])
   const [pendientes, setPendientes] = useState<any[]>([])
@@ -16,9 +14,17 @@ export default function AdminPage() {
 
   useEffect(() => { verificarAdmin() }, [])
 
-  const verificarAdmin = async () => {
+ const verificarAdmin = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user || user.email !== ADMIN_EMAIL) {
+    if (!user) { router.push('/dashboard'); return }
+
+    const { data: empresa } = await supabase
+      .from('empresas')
+      .select('es_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (!empresa || !empresa.es_admin) {
       router.push('/dashboard')
       return
     }

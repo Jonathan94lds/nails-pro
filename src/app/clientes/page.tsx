@@ -119,7 +119,11 @@ export default function ClientesPage() {
           </div>
         ) : (
           clientes.map((cliente, index) => (
-            <div key={cliente.id} className="bg-white rounded-3xl px-5 py-4 flex items-center gap-4 shadow-sm">
+            <div
+              key={cliente.id}
+              onClick={() => router.push(`/clientes/${cliente.id}`)}
+              className="bg-white rounded-3xl px-5 py-4 flex items-center gap-4 shadow-sm cursor-pointer active:scale-95 transition-transform"
+            >
               <div className={`${colores[index % colores.length]} w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm`}>
                 <span className="text-white font-bold text-lg">
                   {cliente.nombre.charAt(0).toUpperCase()}
