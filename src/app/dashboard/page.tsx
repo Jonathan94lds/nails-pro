@@ -8,21 +8,23 @@ export default function DashboardPage() {
   const [empresa, setEmpresa] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
- const [esAdmin, setEsAdmin] = useState(false)
+  const [esAdmin, setEsAdmin] = useState(false)
   const router = useRouter()
+
+  const ADMIN_EMAIL = 'jonathan94lds@hotmail.com'
 
   useEffect(() => {
     const cargarEmpresa = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
+      setEsAdmin(user.email === ADMIN_EMAIL)
+
       const { data } = await supabase
         .from('empresas')
         .select('*')
         .eq('id', user.id)
         .single()
-
-      setEsAdmin(data?.es_admin || false)
 
       if (data) {
         setEmpresa(data)
@@ -92,21 +94,24 @@ export default function DashboardPage() {
             <div className="w-10 h-10 bg-teal-400 rounded-2xl flex items-center justify-center shadow-sm">
               <span className="text-xl">💅</span>
             </div>
-            <button onClick={handleLogout} className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center">
-              <span className="text-lg">🚪</span>
+            <button onClick={handleLogout} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14 bg-gray-100 rounded-2xl">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span className="text-[10px] font-semibold text-red-500">Salir</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Alerta de vencimiento */}
-      {diasRestantes !== null && diasRestantes <= 3 && (
+      {diasRestantes !== null && diasRestantes <= 5 && (
         <div className={`${getAlertaColor()} mx-4 mt-4 rounded-3xl p-4 text-white`}>
           <p className="font-semibold text-sm">{getAlertaMensaje()}</p>
         </div>
       )}
 
-      {/* Banner admin */}
       {esAdmin && (
         <div
           onClick={() => router.push('/admin')}

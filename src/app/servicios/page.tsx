@@ -61,7 +61,7 @@ export default function ServiciosPage() {
               onClick={() => router.push('/dashboard')}
               className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center"
             >
-              <span className="text-lg">←</span>
+              <span className="text-2xl font-bold">←</span>
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Servicios</h1>

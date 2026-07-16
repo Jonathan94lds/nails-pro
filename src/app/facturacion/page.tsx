@@ -4,29 +4,33 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+function fechaHoy() {
+  return new Date().toISOString().split('T')[0]
+}
+
 export default function FacturacionPage() {
   const [citas, setCitas] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [citaFacturando, setCitaFacturando] = useState<string | null>(null)
   const [metodoPago, setMetodoPago] = useState('')
+  const [fechaFiltro, setFechaFiltro] = useState(fechaHoy())
   const router = useRouter()
 
-  useEffect(() => { cargarCitasHoy() }, [])
+  useEffect(() => { cargarCitas() }, [fechaFiltro])
 
-  const cargarCitasHoy = async () => {
+  const cargarCitas = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
-    const hoy = new Date()
-    const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString()
-    const fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1).toISOString()
+    const inicio = new Date(`${fechaFiltro}T00:00:00`).toISOString()
+    const fin = new Date(`${fechaFiltro}T23:59:59`).toISOString()
 
     const { data } = await supabase
       .from('citas')
       .select('*, clientes(nombre)')
       .eq('empresa_id', user.id)
       .gte('fecha_inicio', inicio)
-      .lt('fecha_inicio', fin)
+      .lte('fecha_inicio', fin)
       .neq('estado', 'cancelada')
       .order('fecha_inicio')
 
@@ -49,7 +53,7 @@ export default function FacturacionPage() {
     setCitaFacturando(null)
     setMetodoPago('')
     setLoading(false)
-    cargarCitasHoy()
+    cargarCitas()
   }
 
   const formatHora = (fecha: string) => {
@@ -58,34 +62,56 @@ export default function FacturacionPage() {
 
   const citasPendientes = citas.filter(c => c.estado !== 'facturada')
   const citasFacturadas = citas.filter(c => c.estado === 'facturada')
-  const totalHoy = citasFacturadas.reduce((sum, c) => sum + (c.valor_total || 0), 0)
+  const totalDia = citasFacturadas.reduce((sum, c) => sum + (c.valor_total || 0), 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => router.push('/dashboard')} className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center">
-            <span className="text-lg">←</span>
+            <span className="text-2xl font-bold">←</span>
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Facturación</h1>
-            <p className="text-gray-400 text-sm">Citas de hoy</p>
+            <p className="text-gray-400 text-sm">Citas del día</p>
           </div>
         </div>
 
-        {/* Resumen del día */}
-        <div className="bg-teal-400 rounded-3xl p-5 text-white">
-          <p className="text-teal-100 text-sm">Ingresos de hoy</p>
-          <p className="text-3xl font-bold mt-1">${totalHoy.toLocaleString()}</p>
-          <div className="flex gap-4 mt-3">
-            <div>
-              <p className="text-2xl font-bold">{citasFacturadas.length}</p>
-              <p className="text-teal-100 text-xs">Facturadas</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{citasPendientes.length}</p>
-              <p className="text-teal-100 text-xs">Pendientes</p>
-            </div>
+        {/* Selector de fecha */}
+        <div className="mb-4">
+          <label className="text-sm font-semibold text-gray-600 mb-1 block">Ver citas de esta fecha</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={fechaFiltro}
+              onChange={(e) => setFechaFiltro(e.target.value)}
+              className="flex-1 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
+            />
+            {fechaFiltro !== fechaHoy() && (
+              <button
+                onClick={() => setFechaFiltro(fechaHoy())}
+                className="bg-teal-400 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-sm whitespace-nowrap"
+              >
+                Hoy
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Resumen del día — rediseñado con más espacio */}
+        <div className="bg-teal-400 rounded-3xl p-5 text-white mb-3">
+          <p className="text-teal-100 text-sm">Ingresos del día</p>
+          <p className="text-3xl font-bold mt-1">${totalDia.toLocaleString()}</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-green-50 rounded-3xl p-4 text-center">
+            <p className="text-2xl font-bold text-green-600">{citasFacturadas.length}</p>
+            <p className="text-green-500 text-xs font-semibold mt-1">Facturadas</p>
+          </div>
+          <div className="bg-yellow-50 rounded-3xl p-4 text-center">
+            <p className="text-2xl font-bold text-yellow-600">{citasPendientes.length}</p>
+            <p className="text-yellow-600 text-xs font-semibold mt-1">Pendientes</p>
           </div>
         </div>
       </div>
@@ -96,8 +122,8 @@ export default function FacturacionPage() {
             <div className="w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
               <span className="text-4xl">🧾</span>
             </div>
-            <p className="text-gray-800 font-semibold">No hay citas hoy</p>
-            <p className="text-gray-400 text-sm mt-1">Las citas de hoy aparecerán aquí</p>
+            <p className="text-gray-800 font-semibold">No hay citas en esta fecha</p>
+            <p className="text-gray-400 text-sm mt-1">Elige otra fecha para ver sus citas</p>
           </div>
         ) : (
           <>

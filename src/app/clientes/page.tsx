@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<any[]>([])
+  const [busqueda, setBusqueda] = useState('')
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,21 +44,26 @@ export default function ClientesPage() {
 
   const colores = ['bg-teal-400', 'bg-purple-400', 'bg-blue-400', 'bg-pink-400', 'bg-orange-400', 'bg-green-400']
 
+  const clientesFiltrados = clientes.filter(c =>
+    c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.telefono || '').includes(busqueda)
+  )
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/dashboard')}
               className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center"
             >
-              <span className="text-lg">←</span>
+              <span className="text-2xl font-bold">←</span>
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-              <p className="text-gray-400 text-sm">{clientes.length} contactos</p>
+              <p className="text-gray-400 text-sm">{clientesFiltrados.length} contactos</p>
             </div>
           </div>
           <button
@@ -66,6 +72,18 @@ export default function ClientesPage() {
           >
             <span className="text-white text-2xl font-light">{mostrarForm ? '×' : '+'}</span>
           </button>
+        </div>
+
+        {/* Buscador */}
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+          <input
+            type="text"
+            placeholder="Buscar cliente por nombre o teléfono"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-11 pr-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
+          />
         </div>
       </div>
 
@@ -109,16 +127,20 @@ export default function ClientesPage() {
 
       {/* Lista de clientes */}
       <div className="px-4 py-4 space-y-3">
-        {clientes.length === 0 ? (
+        {clientesFiltrados.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-teal-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
               <span className="text-4xl">👥</span>
             </div>
-            <p className="text-gray-800 font-semibold">Sin clientes aún</p>
-            <p className="text-gray-400 text-sm mt-1">Toca + para agregar tu primer cliente</p>
+            <p className="text-gray-800 font-semibold">
+              {busqueda ? 'Sin resultados' : 'Sin clientes aún'}
+            </p>
+            <p className="text-gray-400 text-sm mt-1">
+              {busqueda ? 'Intenta con otro nombre o teléfono' : 'Toca + para agregar tu primer cliente'}
+            </p>
           </div>
         ) : (
-          clientes.map((cliente, index) => (
+          clientesFiltrados.map((cliente, index) => (
             <div
               key={cliente.id}
               onClick={() => router.push(`/clientes/${cliente.id}`)}

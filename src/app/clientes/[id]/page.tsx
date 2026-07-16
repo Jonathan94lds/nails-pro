@@ -105,7 +105,7 @@ export default function HistorialClientePage() {
             onClick={() => router.push('/clientes')}
             className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center"
           >
-            <span className="text-lg">←</span>
+            <span className="text-2xl font-bold">←</span>
           </button>
           <div className="bg-teal-400 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm">
             <span className="text-white font-bold text-lg">

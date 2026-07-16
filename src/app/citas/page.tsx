@@ -17,6 +17,7 @@ export default function CitasPage() {
   const [fecha, setFecha] = useState('')
   const [hora, setHora] = useState('')
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [mostrarModalServicios, setMostrarModalServicios] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [fechaFiltro, setFechaFiltro] = useState(fechaHoy())
@@ -144,26 +145,29 @@ export default function CitasPage() {
 
   const citasMostradas = verTodasPendientes ? citasPendientesFuturas : citasDelDia
 
+  const serviciosSeleccionadosObjs = servicios.filter(s => serviciosSeleccionados.includes(s.id))
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push('/dashboard')} className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center">
-              <span className="text-lg">←</span>
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Citas</h1>
-              <p className="text-gray-400 text-sm">{citasMostradas.length} citas</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setMostrarForm(!mostrarForm)}
-            className="w-10 h-10 bg-teal-400 rounded-2xl flex items-center justify-center shadow-md"
-          >
-            <span className="text-white text-2xl font-light">{mostrarForm ? '×' : '+'}</span>
+        <div className="flex items-center gap-3 mb-4">
+          <button onClick={() => router.push('/dashboard')} className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center">
+            <span className="text-2xl font-bold">←</span>
           </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Citas</h1>
+            <p className="text-gray-400 text-sm">{citasMostradas.length} citas</p>
+          </div>
         </div>
+
+        {/* Botón principal, más protagonista */}
+        <button
+          onClick={() => setMostrarForm(!mostrarForm)}
+          className="w-full bg-teal-400 rounded-2xl py-4 flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
+        >
+          <span className="text-white text-2xl font-light">{mostrarForm ? '×' : '+'}</span>
+          <span className="text-white font-bold">{mostrarForm ? 'Cerrar' : 'Agregar cita'}</span>
+        </button>
       </div>
 
       {mostrarForm && (
@@ -180,26 +184,33 @@ export default function CitasPage() {
               {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
           </div>
+
+          {/* Servicios: ahora en ventana emergente en vez de lista larga */}
           <div>
             <label className="text-sm font-semibold text-gray-600 mb-2 block">Servicios</label>
-            <div className="space-y-2">
-              {servicios.map(s => (
-                <div
-                  key={s.id}
-                  onClick={() => toggleServicio(s.id)}
-                  className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer border-2 transition-all ${serviciosSeleccionados.includes(s.id) ? 'border-teal-400 bg-teal-50' : 'border-gray-100 bg-gray-50'}`}
-                >
-                  <div>
-                    <p className="font-semibold text-gray-800 text-sm">{s.nombre}</p>
-                    <p className="text-gray-400 text-xs">${s.valor.toLocaleString()} · {s.duracion_min} min</p>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${serviciosSeleccionados.includes(s.id) ? 'border-teal-400 bg-teal-400' : 'border-gray-300'}`}>
-                    {serviciosSeleccionados.includes(s.id) && <span className="text-white text-xs">✓</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <button
+              onClick={() => setMostrarModalServicios(true)}
+              className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-4 text-left flex items-center justify-between"
+            >
+              <span className={serviciosSeleccionados.length > 0 ? 'text-gray-800 font-semibold' : 'text-gray-400'}>
+                {serviciosSeleccionados.length > 0
+                  ? `${serviciosSeleccionados.length} servicio(s) seleccionado(s)`
+                  : 'Toca para elegir servicios'}
+              </span>
+              <span className="text-gray-400">›</span>
+            </button>
+
+            {serviciosSeleccionadosObjs.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {serviciosSeleccionadosObjs.map(s => (
+                  <span key={s.id} className="bg-teal-50 text-teal-600 text-xs font-semibold px-3 py-1.5 rounded-xl">
+                    {s.nombre}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
+
           {serviciosSeleccionados.length > 0 && (
             <div className="bg-teal-50 rounded-2xl p-4">
               <p className="text-teal-700 font-semibold text-sm">Total: ${valorTotal.toLocaleString()} · {duracionTotal} min</p>
@@ -237,69 +248,112 @@ export default function CitasPage() {
         </div>
       )}
 
-      <div className="px-4 pt-4 space-y-3">
-        {!verTodasPendientes && (
-          <div>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">Ver citas del día</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={fechaFiltro}
-                onChange={(e) => setFechaFiltro(e.target.value)}
-                className="flex-1 bg-white border border-gray-100 rounded-2xl px-4 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-              />
-              {fechaFiltro !== fechaHoy() && (
-                <button
-                  onClick={() => setFechaFiltro(fechaHoy())}
-                  className="bg-teal-400 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-sm whitespace-nowrap"
+      {/* Modal / ventana flotante para elegir servicios */}
+      {mostrarModalServicios && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-50" onClick={() => setMostrarModalServicios(false)}>
+          <div
+            className="bg-white rounded-t-3xl w-full max-h-[75vh] flex flex-col p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-800 text-lg">Elegir servicios</h3>
+              <button onClick={() => setMostrarModalServicios(false)} className="text-2xl text-gray-400">×</button>
+            </div>
+            <div className="overflow-y-auto space-y-2 flex-1">
+              {servicios.map(s => (
+                <div
+                  key={s.id}
+                  onClick={() => toggleServicio(s.id)}
+                  className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer border-2 transition-all ${serviciosSeleccionados.includes(s.id) ? 'border-teal-400 bg-teal-50' : 'border-gray-100 bg-gray-50'}`}
                 >
-                  Hoy
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={() => setVerTodasPendientes(!verTodasPendientes)}
-          className={`w-full py-3 rounded-2xl font-semibold text-sm shadow-sm transition-colors ${
-            verTodasPendientes ? 'bg-purple-500 text-white' : 'bg-white text-purple-500 border border-purple-200'
-          }`}
-        >
-          {verTodasPendientes ? '← Volver a ver por fecha' : 'Ver todas las pendientes'}
-        </button>
-      </div>
-
-      <div className="px-4 py-4 space-y-3">
-        {citasMostradas.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-teal-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-4xl">📅</span>
-            </div>
-            <p className="text-gray-800 font-semibold">
-              {verTodasPendientes ? 'Sin citas pendientes' : 'Sin citas en esta fecha'}
-            </p>
-            <p className="text-gray-400 text-sm mt-1">
-              {verTodasPendientes ? 'No hay citas pendientes desde hoy en adelante' : 'Elige otra fecha o agenda una nueva cita'}
-            </p>
-          </div>
-        ) : (
-          citasMostradas.map((cita) => (
-            <div key={cita.id} className="bg-white rounded-3xl px-5 py-4 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-bold text-gray-800">{cita.clientes?.nombre}</p>
-                  <p className="text-gray-400 text-sm mt-1">{formatFecha(cita.fecha_inicio)}</p>
-                  <p className="text-teal-500 font-semibold text-sm mt-1">${cita.valor_total?.toLocaleString()} · {cita.duracion_total} min</p>
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm">{s.nombre}</p>
+                    <p className="text-gray-400 text-xs">${s.valor.toLocaleString()} · {s.duracion_min} min</p>
+                  </div>
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${serviciosSeleccionados.includes(s.id) ? 'border-teal-400 bg-teal-400' : 'border-gray-300'}`}>
+                    {serviciosSeleccionados.includes(s.id) && <span className="text-white text-xs">✓</span>}
+                  </div>
                 </div>
-                <span className={`px-3 py-1 rounded-xl text-xs font-semibold ${colorEstado(cita.estado)}`}>
-                  {cita.estado}
-                </span>
-              </div>
+              ))}
             </div>
-          ))
-        )}
-      </div>
+            <button
+              onClick={() => setMostrarModalServicios(false)}
+              className="w-full bg-teal-400 text-white py-4 rounded-2xl font-semibold shadow-md mt-4"
+            >
+              Listo ({serviciosSeleccionados.length})
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filtros: solo se muestran si NO se está creando una cita */}
+      {!mostrarForm && (
+        <>
+          <div className="px-4 pt-4 space-y-3">
+            {!verTodasPendientes && (
+              <div>
+                <label className="text-sm font-semibold text-gray-600 mb-1 block">Ver citas del día</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={fechaFiltro}
+                    onChange={(e) => setFechaFiltro(e.target.value)}
+                    className="flex-1 bg-white border border-gray-100 rounded-2xl px-4 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  />
+                  {fechaFiltro !== fechaHoy() && (
+                    <button
+                      onClick={() => setFechaFiltro(fechaHoy())}
+                      className="bg-teal-400 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-sm whitespace-nowrap"
+                    >
+                      Hoy
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setVerTodasPendientes(!verTodasPendientes)}
+              className={`w-full py-3 rounded-2xl font-semibold text-sm shadow-sm transition-colors ${
+                verTodasPendientes ? 'bg-purple-500 text-white' : 'bg-white text-purple-500 border border-purple-200'
+              }`}
+            >
+              {verTodasPendientes ? '← Volver a ver por fecha' : 'Ver todas las pendientes'}
+            </button>
+          </div>
+
+          <div className="px-4 py-4 space-y-3">
+            {citasMostradas.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 bg-teal-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">📅</span>
+                </div>
+                <p className="text-gray-800 font-semibold">
+                  {verTodasPendientes ? 'Sin citas pendientes' : 'Sin citas en esta fecha'}
+                </p>
+                <p className="text-gray-400 text-sm mt-1">
+                  {verTodasPendientes ? 'No hay citas pendientes desde hoy en adelante' : 'Elige otra fecha o agenda una nueva cita'}
+                </p>
+              </div>
+            ) : (
+              citasMostradas.map((cita) => (
+                <div key={cita.id} className="bg-white rounded-3xl px-5 py-4 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-bold text-gray-800">{cita.clientes?.nombre}</p>
+                      <p className="text-gray-400 text-sm mt-1">{formatFecha(cita.fecha_inicio)}</p>
+                      <p className="text-teal-500 font-semibold text-sm mt-1">${cita.valor_total?.toLocaleString()} · {cita.duracion_total} min</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-xl text-xs font-semibold ${colorEstado(cita.estado)}`}>
+                      {cita.estado}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
