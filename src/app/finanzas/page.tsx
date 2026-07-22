@@ -17,9 +17,19 @@ export default function FinanzasPage() {
   const [valorGasto, setValorGasto] = useState('')
   const [categoria, setCategoria] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // --- Dashboard del mes (independiente del selector de período) ---
+  const [ingresosMesActual, setIngresosMesActual] = useState(0)
+  const [ingresosMesAnterior, setIngresosMesAnterior] = useState(0)
+  const [servicioTop, setServicioTop] = useState<{ nombre: string, veces: number } | null>(null)
+  const [clienteTop, setClienteTop] = useState<{ nombre: string, veces: number } | null>(null)
+  const [diaTop, setDiaTop] = useState<{ nombre: string, veces: number } | null>(null)
+  const [cargandoDashboard, setCargandoDashboard] = useState(true)
+
   const router = useRouter()
 
   useEffect(() => { cargarDatos() }, [periodo])
+  useEffect(() => { cargarDashboard() }, [])
 
   const getRango = () => {
     const ahora = new Date()
@@ -62,6 +72,74 @@ export default function FinanzasPage() {
     setGastos(totalGastos)
   }
 
+  // Trae las citas facturadas del mes actual y del mes anterior, y saca
+  // los 4 datos del dashboard: ingresos vs mes anterior, servicio más
+  // vendido, cliente más frecuente y día más ocupado.
+  const cargarDashboard = async () => {
+    setCargandoDashboard(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const ahora = new Date()
+    const inicioMesActual = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+    const inicioMesAnterior = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
+    const finMesAnterior = new Date(ahora.getFullYear(), ahora.getMonth(), 0, 23, 59, 59)
+
+    const [{ data: citasMesActual }, { data: citasMesAnterior }] = await Promise.all([
+      supabase
+        .from('citas')
+        .select('*, clientes(nombre), cita_servicios(servicios(nombre))')
+        .eq('empresa_id', user.id)
+        .eq('estado', 'facturada')
+        .gte('facturada_en', inicioMesActual.toISOString())
+        .lte('facturada_en', ahora.toISOString()),
+      supabase
+        .from('citas')
+        .select('valor_total')
+        .eq('empresa_id', user.id)
+        .eq('estado', 'facturada')
+        .gte('facturada_en', inicioMesAnterior.toISOString())
+        .lte('facturada_en', finMesAnterior.toISOString())
+    ])
+
+    const listaMesActual = citasMesActual || []
+    const listaMesAnterior = citasMesAnterior || []
+
+    setIngresosMesActual(listaMesActual.reduce((sum, c) => sum + (c.valor_total || 0), 0))
+    setIngresosMesAnterior(listaMesAnterior.reduce((sum, c) => sum + (c.valor_total || 0), 0))
+
+    // Servicio más vendido del mes
+    const conteoServicios: Record<string, number> = {}
+    listaMesActual.forEach(c => {
+      (c.cita_servicios || []).forEach((cs: any) => {
+        const nombre = cs.servicios?.nombre
+        if (nombre) conteoServicios[nombre] = (conteoServicios[nombre] || 0) + 1
+      })
+    })
+    const topServicio = Object.entries(conteoServicios).sort((a, b) => b[1] - a[1])[0]
+    setServicioTop(topServicio ? { nombre: topServicio[0], veces: topServicio[1] } : null)
+
+    // Cliente más frecuente del mes
+    const conteoClientes: Record<string, number> = {}
+    listaMesActual.forEach(c => {
+      const nombre = c.clientes?.nombre
+      if (nombre) conteoClientes[nombre] = (conteoClientes[nombre] || 0) + 1
+    })
+    const topCliente = Object.entries(conteoClientes).sort((a, b) => b[1] - a[1])[0]
+    setClienteTop(topCliente ? { nombre: topCliente[0], veces: topCliente[1] } : null)
+
+    // Día de la semana más ocupado del mes
+    const conteoDias: Record<string, number> = {}
+    listaMesActual.forEach(c => {
+      const nombreDia = new Date(c.fecha_inicio || c.facturada_en).toLocaleDateString('es-CO', { weekday: 'long' })
+      conteoDias[nombreDia] = (conteoDias[nombreDia] || 0) + 1
+    })
+    const topDia = Object.entries(conteoDias).sort((a, b) => b[1] - a[1])[0]
+    setDiaTop(topDia ? { nombre: topDia[0], veces: topDia[1] } : null)
+
+    setCargandoDashboard(false)
+  }
+
   const agregarGasto = async () => {
     if (!descripcion.trim() || !valorGasto) return
     setLoading(true)
@@ -79,6 +157,7 @@ export default function FinanzasPage() {
     setMostrarFormGasto(false)
     setLoading(false)
     cargarDatos()
+    cargarDashboard()
   }
 
   const utilidad = ingresos - gastos
@@ -88,6 +167,11 @@ export default function FinanzasPage() {
     { key: 'mes', label: 'Mes' },
     { key: 'año', label: 'Año' },
   ]
+
+  const variacionMensual = ingresosMesAnterior > 0
+    ? ((ingresosMesActual - ingresosMesAnterior) / ingresosMesAnterior) * 100
+    : (ingresosMesActual > 0 ? 100 : 0)
+  const subioIngresos = variacionMensual >= 0
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -100,6 +184,52 @@ export default function FinanzasPage() {
             <h1 className="text-2xl font-bold text-gray-900">Finanzas</h1>
             <p className="text-gray-400 text-sm">Ingresos y gastos</p>
           </div>
+        </div>
+      </div>
+
+      <div className="px-4 py-4 space-y-4">
+        {/* Dashboard del mes: 4 tarjetas con lo que más importa de un vistazo */}
+        <div>
+          <h2 className="font-bold text-gray-800 mb-3">Dashboard del mes</h2>
+          {cargandoDashboard ? (
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-white rounded-3xl p-4 shadow-sm h-24 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {/* Ingresos vs mes anterior */}
+              <div className="bg-white rounded-3xl p-4 shadow-sm">
+                <p className="text-gray-400 text-xs">Ingresos del mes</p>
+                <p className="text-lg font-bold text-gray-800 mt-1">${ingresosMesActual.toLocaleString()}</p>
+                <p className={`text-xs font-semibold mt-1 ${subioIngresos ? 'text-green-500' : 'text-red-400'}`}>
+                  {subioIngresos ? '▲' : '▼'} {Math.abs(variacionMensual).toFixed(0)}% vs mes anterior
+                </p>
+              </div>
+
+              {/* Servicio más vendido */}
+              <div className="bg-white rounded-3xl p-4 shadow-sm">
+                <p className="text-gray-400 text-xs">Servicio más vendido</p>
+                <p className="text-lg font-bold text-gray-800 mt-1 truncate">{servicioTop?.nombre || '—'}</p>
+                <p className="text-xs text-gray-400 mt-1">{servicioTop ? `${servicioTop.veces} veces este mes` : 'Sin datos aún'}</p>
+              </div>
+
+              {/* Cliente más frecuente */}
+              <div className="bg-white rounded-3xl p-4 shadow-sm">
+                <p className="text-gray-400 text-xs">Cliente más frecuente</p>
+                <p className="text-lg font-bold text-gray-800 mt-1 truncate">{clienteTop?.nombre || '—'}</p>
+                <p className="text-xs text-gray-400 mt-1">{clienteTop ? `${clienteTop.veces} citas este mes` : 'Sin datos aún'}</p>
+              </div>
+
+              {/* Día más ocupado */}
+              <div className="bg-white rounded-3xl p-4 shadow-sm">
+                <p className="text-gray-400 text-xs">Día más ocupado</p>
+                <p className="text-lg font-bold text-gray-800 mt-1 capitalize">{diaTop?.nombre || '—'}</p>
+                <p className="text-xs text-gray-400 mt-1">{diaTop ? `${diaTop.veces} citas este mes` : 'Sin datos aún'}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Selector de período */}
@@ -114,9 +244,7 @@ export default function FinanzasPage() {
             </button>
           ))}
         </div>
-      </div>
 
-      <div className="px-4 py-4 space-y-4">
         {/* Resumen */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-teal-400 rounded-3xl p-4 text-white">
