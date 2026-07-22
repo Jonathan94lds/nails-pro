@@ -201,7 +201,7 @@ export default function FinanzasPage() {
             <div className="grid grid-cols-2 gap-3">
               {/* Ingresos vs mes anterior */}
               <div className="bg-white rounded-3xl p-4 shadow-sm">
-                <p className="text-gray-400 text-xs">Ingresos del mes</p>
+                <p className="text-gray-400 text-xs">Ingresos totales (mes actual)</p>
                 <p className="text-lg font-bold text-gray-800 mt-1">${ingresosMesActual.toLocaleString()}</p>
                 <p className={`text-xs font-semibold mt-1 ${subioIngresos ? 'text-green-500' : 'text-red-400'}`}>
                   {subioIngresos ? '▲' : '▼'} {Math.abs(variacionMensual).toFixed(0)}% vs mes anterior
@@ -233,16 +233,19 @@ export default function FinanzasPage() {
         </div>
 
         {/* Selector de período */}
-        <div className="flex gap-2">
-          {periodos.map(p => (
-            <button
-              key={p.key}
-              onClick={() => setPeriodo(p.key)}
-              className={`flex-1 py-2 rounded-2xl text-sm font-semibold transition-all ${periodo === p.key ? 'bg-teal-400 text-white shadow-sm' : 'bg-gray-100 text-gray-500'}`}
-            >
-              {p.label}
-            </button>
-          ))}
+        <div>
+          <h2 className="font-bold text-gray-800 mb-2">Consultar por período</h2>
+          <div className="flex gap-2">
+            {periodos.map(p => (
+              <button
+                key={p.key}
+                onClick={() => setPeriodo(p.key)}
+                className={`flex-1 py-2 rounded-2xl text-sm font-semibold transition-all ${periodo === p.key ? 'bg-teal-400 text-white shadow-sm' : 'bg-gray-100 text-gray-500'}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Resumen */}
