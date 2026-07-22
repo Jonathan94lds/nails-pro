@@ -9,6 +9,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
   const [esAdmin, setEsAdmin] = useState(false)
+
+  // --- Citas de hoy (tarjeta destacada) ---
+  const [citasHoy, setCitasHoy] = useState<any[]>([])
+  const [proximaCita, setProximaCita] = useState<any>(null)
+  const [cargandoCitas, setCargandoCitas] = useState(true)
+
   const router = useRouter()
 
   const ADMIN_EMAIL = 'jonathan94lds@hotmail.com'
@@ -42,10 +48,45 @@ export default function DashboardPage() {
         }
       }
 
+      await cargarCitasHoy(user.id)
       setLoading(false)
     }
     cargarEmpresa()
   }, [router])
+
+  // Trae las citas de hoy (no canceladas) y calcula cuál es la próxima
+  const cargarCitasHoy = async (empresaId: string) => {
+    setCargandoCitas(true)
+    const ahora = new Date()
+    const inicioDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())
+    const finDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1)
+
+    const { data } = await supabase
+      .from('citas')
+      .select('*, clientes(nombre)')
+      .eq('empresa_id', empresaId)
+      .neq('estado', 'cancelada')
+      .gte('fecha_inicio', inicioDia.toISOString())
+      .lt('fecha_inicio', finDia.toISOString())
+      .order('fecha_inicio')
+
+    const lista = data || []
+    setCitasHoy(lista)
+
+    const siguiente = lista.find(c => new Date(c.fecha_inicio).getTime() >= ahora.getTime())
+    setProximaCita(siguiente || null)
+    setCargandoCitas(false)
+  }
+
+  const tiempoHasta = (fechaIso: string) => {
+    const diffMs = new Date(fechaIso).getTime() - new Date().getTime()
+    if (diffMs <= 0) return 'ahora'
+    const totalMin = Math.round(diffMs / 60000)
+    const horas = Math.floor(totalMin / 60)
+    const minutos = totalMin % 60
+    if (horas > 0) return `en ${horas}h ${minutos}min`
+    return `en ${minutos} min`
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -78,8 +119,8 @@ export default function DashboardPage() {
   const getAlertaMensaje = () => {
     if (diasRestantes === null) return ''
     if (diasRestantes <= 0) return '🔴 Tu suscripción ha vencido. Contacta al administrador para renovar.'
-    if (diasRestantes === 1) return '⚠️ Tu suscripción vence mañana. Contacta al administrador para renovar.'
-    return `⚠️ Tu suscripción vence en ${diasRestantes} días. Contacta al administrador para renovar.`
+    if (diasRestantes === 1) return '⚠ Tu suscripción vence mañana. Contacta al administrador para renovar.'
+    return `⚠ Tu suscripción vence en ${diasRestantes} días. Contacta al administrador para renovar.`
   }
 
   return (
@@ -119,32 +160,59 @@ export default function DashboardPage() {
               <p className="font-bold text-sm">Panel de Administrador</p>
               <p className="text-gray-400 text-xs mt-1">Gestionar suscriptores</p>
             </div>
-            <span className="text-2xl">⚙️</span>
+            <span className="text-2xl">⚙</span>
           </div>
         </div>
       )}
 
+      {/* Tarjeta destacada: Citas de hoy */}
+      <div
+        onClick={() => router.push('/citas')}
+        className="mx-4 mt-4 bg-teal-400 rounded-3xl p-6 text-white cursor-pointer active:scale-95 transition-all shadow-md"
+      >
+        <p className="text-teal-50 text-sm font-semibold">Citas de hoy</p>
+
+        {cargandoCitas ? (
+          <div className="h-14 flex items-center">
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <>
+            <p className="text-4xl font-bold mt-1">{citasHoy.length}</p>
+            {citasHoy.length === 0 ? (
+              <p className="text-teal-50 text-sm mt-2">No tienes citas agendadas para hoy</p>
+            ) : proximaCita ? (
+              <p className="text-teal-50 text-sm mt-2">
+                Próxima: <span className="font-semibold">{proximaCita.clientes?.nombre || 'Cliente'}</span> · {tiempoHasta(proximaCita.fecha_inicio)}
+              </p>
+            ) : (
+              <p className="text-teal-50 text-sm mt-2">Ya pasaron todas las citas de hoy</p>
+            )}
+          </>
+        )}
+      </div>
+
       <div className="px-6 py-6">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">Menú principal</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <h2 className="text-sm font-semibold text-gray-500 mb-3">Menú principal</h2>
+        <div className="grid grid-cols-2 gap-3">
           {modulos.map((modulo) => (
             <div
               key={modulo.ruta}
               onClick={() => router.push(modulo.ruta)}
-              className={`${modulo.color} rounded-3xl p-5 cursor-pointer active:scale-95 transition-all shadow-sm`}
+              className={`${modulo.color} rounded-2xl p-4 cursor-pointer active:scale-95 transition-all shadow-sm`}
             >
-              <div className={`${modulo.iconBg} w-12 h-12 rounded-2xl flex items-center justify-center mb-3`}>
+              <div className={`${modulo.iconBg} w-9 h-9 rounded-xl flex items-center justify-center mb-2`}>
                 {modulo.icon === 'whatsapp' ? (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#10b981">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#10b981">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
                     <path d="M12.004 2C6.486 2 2.004 6.482 2.004 12c0 1.85.505 3.58 1.38 5.067L2 22l5.1-1.336A9.955 9.955 0 0012.004 22C17.522 22 22 17.518 22 12S17.522 2 12.004 2zm0 18.077a8.05 8.05 0 01-4.1-1.12l-.294-.175-3.028.793.808-2.95-.192-.303a8.05 8.05 0 01-1.238-4.322c0-4.457 3.628-8.077 8.048-8.077 4.42 0 8.048 3.62 8.048 8.077 0 4.457-3.628 8.077-8.052 8.077z"/>
                   </svg>
                 ) : (
-                  <span className="text-2xl">{modulo.icon}</span>
+                  <span className="text-lg">{modulo.icon}</span>
                 )}
               </div>
-              <h3 className="font-bold text-gray-800 text-sm">{modulo.titulo}</h3>
-              <p className="text-gray-400 text-xs mt-1">{modulo.descripcion}</p>
+              <h3 className="font-semibold text-gray-700 text-sm">{modulo.titulo}</h3>
+              <p className="text-gray-400 text-xs mt-0.5">{modulo.descripcion}</p>
             </div>
           ))}
         </div>
