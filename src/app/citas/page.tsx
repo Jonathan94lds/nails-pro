@@ -22,23 +22,81 @@ export default function CitasPage() {
   const [error, setError] = useState('')
   const [fechaFiltro, setFechaFiltro] = useState(fechaHoy())
   const [verTodasPendientes, setVerTodasPendientes] = useState(false)
+  const [contactosSoportado, setContactosSoportado] = useState(false)
+  const [importandoContacto, setImportandoContacto] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     cargarDatos()
+    // El selector de contactos del celular (Contact Picker API) solo existe
+    // hoy en día en Chrome para Android. En iPhone/otros navegadores no
+    // aparece 'contacts' en navigator, así que el botón simplemente no se muestra.
+    if (typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window) {
+      setContactosSoportado(true)
+    }
   }, [])
 
   const cargarDatos = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
     const [{ data: citasData }, { data: clientesData }, { data: serviciosData }] = await Promise.all([
-      supabase.from('citas').select('*, clientes(nombre)').eq('empresa_id', user.id).order('fecha_inicio'),
+      supabase.from('citas').select('*, clientes(nombre, telefono), cita_servicios(servicios(nombre))').eq('empresa_id', user.id).order('fecha_inicio'),
       supabase.from('clientes').select('*').eq('empresa_id', user.id).order('nombre'),
       supabase.from('servicios').select('*').eq('empresa_id', user.id).eq('activo', true).order('nombre')
     ])
     setCitas(citasData || [])
     setClientes(clientesData || [])
     setServicios(serviciosData || [])
+  }
+
+  // Abre el selector nativo de contactos del celular (solo Android/Chrome).
+  // Si el número ya existe entre los clientes, selecciona ese cliente.
+  // Si no existe, crea un cliente nuevo con ese nombre y teléfono.
+  const elegirDesdeContactos = async () => {
+    try {
+      setImportandoContacto(true)
+      const seleccionados = await (navigator as any).contacts.select(['name', 'tel'], { multiple: false })
+      if (!seleccionados || seleccionados.length === 0) { setImportandoContacto(false); return }
+
+      const contacto = seleccionados[0]
+      const nombreContacto = (contacto.name && contacto.name[0]) || ''
+      const telCrudo = (contacto.tel && contacto.tel[0]) || ''
+      const telLimpio = telCrudo.replace(/\D/g, '').slice(-10) // últimos 10 dígitos, sin indicativo
+
+      if (!nombreContacto || !telLimpio) {
+        alert('Ese contacto no tiene nombre o teléfono válido')
+        setImportandoContacto(false)
+        return
+      }
+
+      const existente = clientes.find(c => (c.telefono || '').replace(/\D/g, '').slice(-10) === telLimpio)
+
+      if (existente) {
+        setClienteId(existente.id)
+        setImportandoContacto(false)
+        return
+      }
+
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: nuevoCliente, error: errorCliente } = await supabase
+        .from('clientes')
+        .insert({ empresa_id: user?.id, nombre: nombreContacto.trim(), telefono: telLimpio })
+        .select()
+        .single()
+
+      if (errorCliente || !nuevoCliente) {
+        alert('No se pudo crear el cliente desde el contacto')
+        setImportandoContacto(false)
+        return
+      }
+
+      setClientes(prev => [...prev, nuevoCliente].sort((a, b) => a.nombre.localeCompare(b.nombre)))
+      setClienteId(nuevoCliente.id)
+      setImportandoContacto(false)
+    } catch (err) {
+      // El usuario canceló el picker o el navegador lo bloqueó — no hacemos nada
+      setImportandoContacto(false)
+    }
   }
 
   const toggleServicio = (id: string) => {
@@ -137,6 +195,23 @@ export default function CitasPage() {
     }
   }
 
+  // Envía el WhatsApp directamente desde la tarjeta de la cita.
+  // Usa el mismo patrón (wa.me + mensaje predeterminado) que el resto de la app.
+  const enviarWhatsapp = (cita: any) => {
+    const telefono = cita.clientes?.telefono?.replace(/\D/g, '')
+    if (!telefono) {
+      alert('Este cliente no tiene teléfono registrado')
+      return
+    }
+    const nombresServicios = (cita.cita_servicios || [])
+      .map((cs: any) => cs.servicios?.nombre)
+      .filter(Boolean)
+      .join(', ')
+    const hora = new Date(cita.fecha_inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+    const mensaje = `Hola 👋 Te recordamos tu cita para ${nombresServicios || 'tu servicio'} hoy a las ${hora}. ¡Te esperamos!`
+    window.open(`https://wa.me/57${telefono}?text=${encodeURIComponent(mensaje)}`, '_blank')
+  }
+
   const citasDelDia = citas.filter(c => c.fecha_inicio.split('T')[0] === fechaFiltro)
 
   const citasPendientesFuturas = citas
@@ -183,6 +258,17 @@ export default function CitasPage() {
               <option value="">Selecciona un cliente</option>
               {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
+            {contactosSoportado && (
+              <button
+                type="button"
+                onClick={elegirDesdeContactos}
+                disabled={importandoContacto}
+                className="w-full mt-2 bg-teal-50 text-teal-600 py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <span>📇</span>
+                {importandoContacto ? 'Abriendo contactos...' : 'Elegir desde contactos'}
+              </button>
+            )}
           </div>
 
           {/* Servicios: ahora en ventana emergente en vez de lista larga */}
@@ -199,7 +285,6 @@ export default function CitasPage() {
               </span>
               <span className="text-gray-400">›</span>
             </button>
-
             {serviciosSeleccionadosObjs.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {serviciosSeleccionadosObjs.map(s => (
@@ -216,6 +301,7 @@ export default function CitasPage() {
               <p className="text-teal-700 font-semibold text-sm">Total: ${valorTotal.toLocaleString()} · {duracionTotal} min</p>
             </div>
           )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-semibold text-gray-600 mb-1 block">Fecha</label>
@@ -236,7 +322,9 @@ export default function CitasPage() {
               />
             </div>
           </div>
+
           {error && <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-2xl">{error}</div>}
+
           <div className="flex gap-3">
             <button onClick={() => setMostrarForm(false)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold">
               Cancelar
@@ -311,7 +399,6 @@ export default function CitasPage() {
                 </div>
               </div>
             )}
-
             <button
               onClick={() => setVerTodasPendientes(!verTodasPendientes)}
               className={`w-full py-3 rounded-2xl font-semibold text-sm shadow-sm transition-colors ${
@@ -344,9 +431,21 @@ export default function CitasPage() {
                       <p className="text-gray-400 text-sm mt-1">{formatFecha(cita.fecha_inicio)}</p>
                       <p className="text-teal-500 font-semibold text-sm mt-1">${cita.valor_total?.toLocaleString()} · {cita.duracion_total} min</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-xl text-xs font-semibold ${colorEstado(cita.estado)}`}>
-                      {cita.estado}
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`px-3 py-1 rounded-xl text-xs font-semibold ${colorEstado(cita.estado)}`}>
+                        {cita.estado}
+                      </span>
+                      <button
+                        onClick={() => enviarWhatsapp(cita)}
+                        title="Enviar mensaje"
+                        className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center active:scale-95 transition-all"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#10b981">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                          <path d="M12.004 2C6.486 2 2.004 6.482 2.004 12c0 1.85.505 3.58 1.38 5.067L2 22l5.1-1.336A9.955 9.955 0 0012.004 22C17.522 22 22 17.518 22 12S17.522 2 12.004 2zm0 18.077a8.05 8.05 0 01-4.1-1.12l-.294-.175-3.028.793.808-2.95-.192-.303a8.05 8.05 0 01-1.238-4.322c0-4.457 3.628-8.077 8.048-8.077 4.42 0 8.048 3.62 8.048 8.077 0 4.457-3.628 8.077-8.052 8.077z"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))

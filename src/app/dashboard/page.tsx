@@ -63,7 +63,7 @@ export default function DashboardPage() {
     { icon: '✨', titulo: 'Servicios', descripcion: 'Precios y duración', ruta: '/servicios', color: 'bg-purple-50', iconBg: 'bg-purple-100' },
     { icon: '📅', titulo: 'Citas', descripcion: 'Agenda del día', ruta: '/citas', color: 'bg-teal-50', iconBg: 'bg-teal-100' },
     { icon: '💰', titulo: 'Finanzas', descripcion: 'Ingresos y gastos', ruta: '/finanzas', color: 'bg-green-50', iconBg: 'bg-green-100' },
-    { icon: 'whatsapp', titulo: 'WhatsApp', descripcion: 'Recordatorios', ruta: '/notificaciones', color: 'bg-emerald-50', iconBg: 'bg-emerald-100' },
+    //{ icon: 'whatsapp', titulo: 'WhatsApp', descripcion: 'Recordatorios', ruta: '/notificaciones', color: 'bg-emerald-50', iconBg: 'bg-emerald-100' },
     { icon: '🧾', titulo: 'Facturar', descripcion: 'Citas de hoy', ruta: '/facturacion', color: 'bg-orange-50', iconBg: 'bg-orange-100' },
   ]
 
