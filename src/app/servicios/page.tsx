@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Providers'
+import { useConfirm } from '@/components/Providers'
+import { SkeletonList } from '@/components/Skeleton'
+import MoneyInput from '@/components/MoneyInput'
+import BottomNav from '@/components/BottomNav'
 
 export default function ServiciosPage() {
   const [servicios, setServicios] = useState<any[]>([])
@@ -10,12 +15,16 @@ export default function ServiciosPage() {
   const [valor, setValor] = useState('')
   const [duracion, setDuracion] = useState('')
   const [loading, setLoading] = useState(false)
+  const [cargandoLista, setCargandoLista] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(false)
   const router = useRouter()
+  const toast = useToast()
+  const confirmar = useConfirm()
 
   useEffect(() => { cargarServicios() }, [])
 
   const cargarServicios = async () => {
+    setCargandoLista(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
     const { data } = await supabase
@@ -24,19 +33,26 @@ export default function ServiciosPage() {
       .eq('empresa_id', user.id)
       .order('nombre')
     setServicios(data || [])
+    setCargandoLista(false)
   }
 
   const agregarServicio = async () => {
     if (!nombre.trim() || !valor || !duracion) return
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('servicios').insert({
+    const { error } = await supabase.from('servicios').insert({
       empresa_id: user?.id,
       nombre: nombre.trim(),
       valor: parseFloat(valor),
       duracion_min: parseInt(duracion),
       activo: true
     })
+    if (error) {
+      toast('No se pudo guardar el servicio', 'error')
+      setLoading(false)
+      return
+    }
+    toast(`${nombre.trim()} agregado a tus servicios`, 'success')
     setNombre('')
     setValor('')
     setDuracion('')
@@ -45,8 +61,19 @@ export default function ServiciosPage() {
     cargarServicios()
   }
 
-  const toggleActivo = async (id: string, activo: boolean) => {
+  const toggleActivo = async (id: string, activo: boolean, nombreServicio: string) => {
+    // Solo pedimos confirmación al desactivar — activar de nuevo no tiene riesgo
+    if (activo) {
+      const ok = await confirmar({
+        title: 'Desactivar servicio',
+        message: `${nombreServicio} dejará de aparecer al agendar nuevas citas. Podrás activarlo de nuevo cuando quieras.`,
+        confirmText: 'Desactivar',
+        danger: true,
+      })
+      if (!ok) return
+    }
     await supabase.from('servicios').update({ activo: !activo }).eq('id', id)
+    toast(activo ? `${nombreServicio} desactivado` : `${nombreServicio} activado`, 'success')
     cargarServicios()
   }
 
@@ -124,11 +151,10 @@ export default function ServiciosPage() {
               onChange={(e) => setNombre(e.target.value)}
               className={inputClass}
             />
-            <input
-              type="number"
-              placeholder="Precio (ej: 25000)"
+            <MoneyInput
               value={valor}
-              onChange={(e) => setValor(e.target.value)}
+              onChange={setValor}
+              placeholder="Precio (ej: 25.000)"
               className={inputClass}
             />
             <input
@@ -157,8 +183,10 @@ export default function ServiciosPage() {
         </div>
       )}
 
-      <div className="px-4 py-4 space-y-3">
-        {servicios.length === 0 ? (
+      <div className="px-4 py-4 pb-28 space-y-3">
+        {cargandoLista ? (
+          <SkeletonList filas={5} />
+        ) : servicios.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-[#F3EDE3] rounded-3xl flex items-center justify-center mx-auto mb-4 text-[#8A6A3A]">
               <IconServicioGrande />
@@ -182,7 +210,7 @@ export default function ServiciosPage() {
                 </div>
               </div>
               <button
-                onClick={() => toggleActivo(servicio.id, servicio.activo)}
+                onClick={() => toggleActivo(servicio.id, servicio.activo, servicio.nombre)}
                 className={`px-3 py-1 rounded-xl text-xs font-semibold ${servicio.activo ? 'bg-[#E7EDE9] text-[#2F4A3C]' : 'bg-[#F1EEE9] text-[#B4AC9E]'}`}
               >
                 {servicio.activo ? 'Activo' : 'Inactivo'}
@@ -191,6 +219,7 @@ export default function ServiciosPage() {
           ))
         )}
       </div>
+      <BottomNav />
     </div>
   )
 }

@@ -94,127 +94,186 @@ export default function DashboardPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-teal-400 border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-[#B08D57] border-t-transparent rounded-full animate-spin"></div>
     </div>
   )
 
+  // Íconos de línea, mismo grosor de trazo, agnósticos de nicho
+  const IconClientes = (p: any) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+      <circle cx="10" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+  const IconServicios = (p: any) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z" />
+    </svg>
+  )
+  const IconCitas = (p: any) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="3" y="4.5" width="18" height="16" rx="2" />
+      <path d="M16 2.5v4M8 2.5v4M3 9.5h18" />
+    </svg>
+  )
+  const IconFinanzas = (p: any) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M16 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />
+    </svg>
+  )
+  const IconFacturar = (p: any) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M6 3h9l3 3v15l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3V5a2 2 0 0 1 2-2z" />
+      <path d="M9 9h6M9 13h6M9 17h3" />
+    </svg>
+  )
+  const IconLogout = (p: any) => (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  )
+  const IconAdmin = (p: any) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  )
+  const IconWarning = (p: any) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M12 9v4M12 17h.01" />
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    </svg>
+  )
+
   const modulos = [
-    { icon: '👥', titulo: 'Clientes', descripcion: 'Base de clientes', ruta: '/clientes', color: 'bg-blue-50', iconBg: 'bg-blue-100' },
-    { icon: '✨', titulo: 'Servicios', descripcion: 'Precios y duración', ruta: '/servicios', color: 'bg-purple-50', iconBg: 'bg-purple-100' },
-    { icon: '📅', titulo: 'Citas', descripcion: 'Agenda del día', ruta: '/citas', color: 'bg-teal-50', iconBg: 'bg-teal-100' },
-    { icon: '💰', titulo: 'Finanzas', descripcion: 'Ingresos y gastos', ruta: '/finanzas', color: 'bg-green-50', iconBg: 'bg-green-100' },
-    //{ icon: 'whatsapp', titulo: 'WhatsApp', descripcion: 'Recordatorios', ruta: '/notificaciones', color: 'bg-emerald-50', iconBg: 'bg-emerald-100' },
-    { icon: '🧾', titulo: 'Facturar', descripcion: 'Citas de hoy', ruta: '/facturacion', color: 'bg-orange-50', iconBg: 'bg-orange-100' },
+    { icon: IconClientes, titulo: 'Clientes', descripcion: 'Base de clientes', ruta: '/clientes' },
+    { icon: IconServicios, titulo: 'Servicios', descripcion: 'Precios y duración', ruta: '/servicios' },
+    { icon: IconCitas, titulo: 'Citas', descripcion: 'Agenda del día', ruta: '/citas' },
+    { icon: IconFinanzas, titulo: 'Finanzas', descripcion: 'Ingresos y gastos', ruta: '/finanzas' },
+    { icon: IconFacturar, titulo: 'Facturar', descripcion: 'Citas de hoy', ruta: '/facturacion' },
   ]
 
   const getAlertaColor = () => {
     if (diasRestantes === null) return ''
-    if (diasRestantes <= 0) return 'bg-red-500'
-    if (diasRestantes <= 1) return 'bg-red-400'
-    if (diasRestantes <= 2) return 'bg-orange-400'
-    return 'bg-yellow-400'
+    if (diasRestantes <= 0) return 'bg-[#8C2F27]'
+    if (diasRestantes <= 1) return 'bg-[#A8392F]'
+    if (diasRestantes <= 2) return 'bg-[#B8623A]'
+    return 'bg-[#B08D57]'
   }
 
   const getAlertaMensaje = () => {
     if (diasRestantes === null) return ''
-    if (diasRestantes <= 0) return '🔴 Tu suscripción ha vencido. Contacta al administrador para renovar.'
-    if (diasRestantes === 1) return '⚠ Tu suscripción vence mañana. Contacta al administrador para renovar.'
-    return `⚠ Tu suscripción vence en ${diasRestantes} días. Contacta al administrador para renovar.`
+    if (diasRestantes <= 0) return 'Tu suscripción ha vencido. Contacta al administrador para renovar.'
+    if (diasRestantes === 1) return 'Tu suscripción vence mañana. Contacta al administrador para renovar.'
+    return `Tu suscripción vence en ${diasRestantes} días. Contacta al administrador para renovar.`
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
+    <div className="min-h-screen bg-[#FAF8F5]">
+      {/* Header */}
+      <div className="px-6 pt-14 pb-7">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-gray-400 text-sm">Bienvenida 👋</p>
-            <h1 className="text-2xl font-bold text-gray-900 mt-1">{empresa?.nombre || 'Nails Pro'}</h1>
+            <p className="text-[11px] font-semibold tracking-[0.18em] text-[#B08D57] uppercase">Bienvenida</p>
+            <h1
+              className="text-[28px] leading-tight text-[#1F1B18] mt-1.5"
+              style={{ fontFamily: 'Fraunces, Georgia, serif' }}
+            >
+              {empresa?.nombre || 'Tu Estudio'}
+            </h1>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={handleLogout} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14 bg-gray-100 rounded-2xl">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              <span className="text-[10px] font-semibold text-red-500">Salir</span>
-            </button>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="w-11 h-11 rounded-full border border-[#E7E2DA] flex items-center justify-center text-[#8A8378] hover:text-[#1F1B18] hover:border-[#1F1B18] transition-colors"
+            aria-label="Cerrar sesión"
+          >
+            <IconLogout />
+          </button>
         </div>
       </div>
 
-      {diasRestantes !== null && diasRestantes <= 5 && (
-        <div className={`${getAlertaColor()} mx-4 mt-4 rounded-3xl p-4 text-white`}>
-          <p className="font-semibold text-sm">{getAlertaMensaje()}</p>
-        </div>
-      )}
+      <div className="px-4 space-y-3">
+        {/* Alerta de suscripción */}
+        {diasRestantes !== null && diasRestantes <= 5 && (
+          <div className={`${getAlertaColor()} rounded-2xl px-5 py-4 text-white flex items-start gap-3`}>
+            <IconWarning className="mt-0.5 shrink-0" />
+            <p className="text-[13px] leading-snug font-medium">{getAlertaMensaje()}</p>
+          </div>
+        )}
 
-      {esAdmin && (
+        {/* Panel admin */}
+        {esAdmin && (
+          <div
+            onClick={() => router.push('/admin')}
+            className="bg-[#1F1B18] rounded-2xl px-5 py-4 text-white cursor-pointer active:scale-[0.98] transition-transform flex items-center justify-between"
+          >
+            <div>
+              <p className="font-semibold text-sm">Panel de administrador</p>
+              <p className="text-[#A79A8A] text-xs mt-0.5">Gestionar suscriptores</p>
+            </div>
+            <IconAdmin className="text-[#B08D57]" />
+          </div>
+        )}
+
+        {/* Tarjeta hero: agenda del día */}
         <div
-          onClick={() => router.push('/admin')}
-          className="mx-4 mt-4 bg-gray-900 rounded-3xl p-4 text-white cursor-pointer active:scale-95 transition-all"
+          onClick={() => router.push('/citas')}
+          className="bg-[#1F1B18] rounded-3xl p-7 text-white cursor-pointer active:scale-[0.98] transition-transform"
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="font-bold text-sm">Panel de Administrador</p>
-              <p className="text-gray-400 text-xs mt-1">Gestionar suscriptores</p>
+            <p className="text-[11px] font-semibold tracking-[0.18em] text-[#B08D57] uppercase">Agenda de hoy</p>
+            <IconCitas className="text-[#B08D57]" />
+          </div>
+
+          {cargandoCitas ? (
+            <div className="h-12 flex items-center mt-2">
+              <div className="w-5 h-5 border-2 border-[#B08D57] border-t-transparent rounded-full animate-spin" />
             </div>
-            <span className="text-2xl">⚙</span>
-          </div>
-        </div>
-      )}
-
-      {/* Tarjeta destacada: Citas de hoy */}
-      <div
-        onClick={() => router.push('/citas')}
-        className="mx-4 mt-4 bg-teal-400 rounded-3xl p-6 text-white cursor-pointer active:scale-95 transition-all shadow-md"
-      >
-        <p className="text-teal-50 text-sm font-semibold">Citas de hoy</p>
-
-        {cargandoCitas ? (
-          <div className="h-14 flex items-center">
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <>
-            <p className="text-4xl font-bold mt-1">{citasHoy.length}</p>
-            {citasHoy.length === 0 ? (
-              <p className="text-teal-50 text-sm mt-2">No tienes citas agendadas para hoy</p>
-            ) : proximaCita ? (
-              <p className="text-teal-50 text-sm mt-2">
-                Próxima: <span className="font-semibold">{proximaCita.clientes?.nombre || 'Cliente'}</span> · {tiempoHasta(proximaCita.fecha_inicio)}
+          ) : (
+            <>
+              <p className="text-[40px] leading-none mt-4" style={{ fontFamily: 'Fraunces, Georgia, serif' }}>
+                {citasHoy.length}
               </p>
-            ) : (
-              <p className="text-teal-50 text-sm mt-2">Ya pasaron todas las citas de hoy</p>
-            )}
-          </>
-        )}
+              {citasHoy.length === 0 ? (
+                <p className="text-[#A79A8A] text-sm mt-3">No tienes citas agendadas para hoy</p>
+              ) : proximaCita ? (
+                <p className="text-[#D8CFC2] text-sm mt-3">
+                  Próxima: <span className="text-white font-medium">{proximaCita.clientes?.nombre || 'Cliente'}</span> · {tiempoHasta(proximaCita.fecha_inicio)}
+                </p>
+              ) : (
+                <p className="text-[#A79A8A] text-sm mt-3">Ya pasaron todas las citas de hoy</p>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="px-6 py-6">
-        <h2 className="text-sm font-semibold text-gray-500 mb-3">Menú principal</h2>
+      {/* Menú principal */}
+      <div className="px-6 pt-7 pb-8">
+        <h2 className="text-[11px] font-semibold tracking-[0.18em] text-[#8A8378] uppercase mb-4">Menú principal</h2>
         <div className="grid grid-cols-2 gap-3">
-          {modulos.map((modulo) => (
-            <div
-              key={modulo.ruta}
-              onClick={() => router.push(modulo.ruta)}
-              className={`${modulo.color} rounded-2xl p-4 cursor-pointer active:scale-95 transition-all shadow-sm`}
-            >
-              <div className={`${modulo.iconBg} w-9 h-9 rounded-xl flex items-center justify-center mb-2`}>
-                {modulo.icon === 'whatsapp' ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#10b981">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                    <path d="M12.004 2C6.486 2 2.004 6.482 2.004 12c0 1.85.505 3.58 1.38 5.067L2 22l5.1-1.336A9.955 9.955 0 0012.004 22C17.522 22 22 17.518 22 12S17.522 2 12.004 2zm0 18.077a8.05 8.05 0 01-4.1-1.12l-.294-.175-3.028.793.808-2.95-.192-.303a8.05 8.05 0 01-1.238-4.322c0-4.457 3.628-8.077 8.048-8.077 4.42 0 8.048 3.62 8.048 8.077 0 4.457-3.628 8.077-8.052 8.077z"/>
-                  </svg>
-                ) : (
-                  <span className="text-lg">{modulo.icon}</span>
-                )}
+          {modulos.map((modulo) => {
+            const Icon = modulo.icon
+            return (
+              <div
+                key={modulo.ruta}
+                onClick={() => router.push(modulo.ruta)}
+                className="bg-white border border-[#EFEAE2] rounded-2xl p-4 cursor-pointer active:scale-[0.97] transition-transform"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#F3EDE3] flex items-center justify-center mb-3 text-[#8A6A3A]">
+                  <Icon />
+                </div>
+                <h3 className="font-semibold text-[#1F1B18] text-sm">{modulo.titulo}</h3>
+                <p className="text-[#8A8378] text-xs mt-0.5">{modulo.descripcion}</p>
               </div>
-              <h3 className="font-semibold text-gray-700 text-sm">{modulo.titulo}</h3>
-              <p className="text-gray-400 text-xs mt-0.5">{modulo.descripcion}</p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>

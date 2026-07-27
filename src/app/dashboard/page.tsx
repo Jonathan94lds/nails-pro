@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { Skeleton } from '@/components/Skeleton'
+import BottomNav from '@/components/BottomNav'
 
 export default function DashboardPage() {
   const [empresa, setEmpresa] = useState<any>(null)
@@ -94,8 +96,22 @@ export default function DashboardPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#B08D57] border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-[#FAF8F5]">
+      <div className="px-6 pt-14 pb-7">
+        <Skeleton className="h-3 w-20 mb-3" />
+        <Skeleton className="h-8 w-48" />
+      </div>
+      <div className="px-4 space-y-3">
+        <Skeleton className="h-40 w-full rounded-3xl" />
+      </div>
+      <div className="px-6 pt-7 pb-8">
+        <Skeleton className="h-3 w-32 mb-4" />
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+          ))}
+        </div>
+      </div>
     </div>
   )
 
@@ -255,7 +271,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Menú principal */}
-      <div className="px-6 pt-7 pb-8">
+      <div className="px-6 pt-7 pb-28">
         <h2 className="text-[11px] font-semibold tracking-[0.18em] text-[#8A8378] uppercase mb-4">Menú principal</h2>
         <div className="grid grid-cols-2 gap-3">
           {modulos.map((modulo) => {
@@ -276,6 +292,7 @@ export default function DashboardPage() {
           })}
         </div>
       </div>
+      <BottomNav />
     </div>
   )
 }

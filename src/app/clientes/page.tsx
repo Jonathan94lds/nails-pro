@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Providers'
+import { SkeletonList } from '@/components/Skeleton'
+import BottomNav from '@/components/BottomNav'
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<any[]>([])
@@ -10,12 +13,15 @@ export default function ClientesPage() {
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
   const [loading, setLoading] = useState(false)
+  const [cargandoLista, setCargandoLista] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(false)
   const router = useRouter()
+  const toast = useToast()
 
   useEffect(() => { cargarClientes() }, [])
 
   const cargarClientes = async () => {
+    setCargandoLista(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
     const { data } = await supabase
@@ -24,17 +30,24 @@ export default function ClientesPage() {
       .eq('empresa_id', user.id)
       .order('nombre')
     setClientes(data || [])
+    setCargandoLista(false)
   }
 
   const agregarCliente = async () => {
     if (!nombre.trim()) return
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('clientes').insert({
+    const { error } = await supabase.from('clientes').insert({
       empresa_id: user?.id,
       nombre: nombre.trim(),
       telefono: telefono.trim()
     })
+    if (error) {
+      toast('No se pudo guardar el cliente', 'error')
+      setLoading(false)
+      return
+    }
+    toast(`${nombre.trim()} agregado a tus clientes`, 'success')
     setNombre('')
     setTelefono('')
     setMostrarForm(false)
@@ -165,8 +178,10 @@ export default function ClientesPage() {
       )}
 
       {/* Lista de clientes */}
-      <div className="px-4 py-4 space-y-3">
-        {clientesFiltrados.length === 0 ? (
+      <div className="px-4 py-4 pb-28 space-y-3">
+        {cargandoLista ? (
+          <SkeletonList filas={5} />
+        ) : clientesFiltrados.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-[#F3EDE3] rounded-3xl flex items-center justify-center mx-auto mb-4 text-[#8A6A3A]">
               <IconClientes />
@@ -201,6 +216,7 @@ export default function ClientesPage() {
           ))
         )}
       </div>
+      <BottomNav />
     </div>
   )
 }

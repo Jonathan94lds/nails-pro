@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Providers'
+import { SkeletonGrid } from '@/components/Skeleton'
+import MoneyInput from '@/components/MoneyInput'
+import BottomNav from '@/components/BottomNav'
 
 type Periodo = 'hoy' | 'semana' | 'mes' | 'año'
 
@@ -27,6 +31,7 @@ export default function FinanzasPage() {
   const [cargandoDashboard, setCargandoDashboard] = useState(true)
 
   const router = useRouter()
+  const toast = useToast()
 
   useEffect(() => { cargarDatos() }, [periodo])
   useEffect(() => { cargarDashboard() }, [])
@@ -144,13 +149,19 @@ export default function FinanzasPage() {
     if (!descripcion.trim() || !valorGasto) return
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('gastos').insert({
+    const { error } = await supabase.from('gastos').insert({
       empresa_id: user?.id,
       descripcion: descripcion.trim(),
       valor: parseFloat(valorGasto),
       fecha: new Date().toISOString().split('T')[0],
       categoria: categoria || 'general'
     })
+    if (error) {
+      toast('No se pudo guardar el gasto', 'error')
+      setLoading(false)
+      return
+    }
+    toast('Gasto registrado', 'success')
     setDescripcion('')
     setValorGasto('')
     setCategoria('')
@@ -216,16 +227,12 @@ export default function FinanzasPage() {
         </div>
       </div>
 
-      <div className="px-4 py-4 space-y-5">
+      <div className="px-4 py-4 pb-28 space-y-5">
         {/* Dashboard del mes: 4 tarjetas con lo que más importa de un vistazo */}
         <div>
           <h2 className="text-[11px] font-semibold tracking-[0.18em] text-[#8A8378] uppercase mb-3">Dashboard del mes</h2>
           {cargandoDashboard ? (
-            <div className="grid grid-cols-2 gap-3">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="bg-white border border-[#EFEAE2] rounded-3xl p-4 h-24 animate-pulse" />
-              ))}
-            </div>
+            <SkeletonGrid celdas={4} />
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {/* Ingresos vs mes anterior */}
@@ -337,11 +344,10 @@ export default function FinanzasPage() {
                 onChange={(e) => setDescripcion(e.target.value)}
                 className={inputClassGasto}
               />
-              <input
-                type="number"
-                placeholder="Valor"
+              <MoneyInput
                 value={valorGasto}
-                onChange={(e) => setValorGasto(e.target.value)}
+                onChange={setValorGasto}
+                placeholder="Valor"
                 className={inputClassGasto}
               />
               <select
@@ -382,6 +388,7 @@ export default function FinanzasPage() {
           )}
         </div>
       </div>
+      <BottomNav />
     </div>
   )
 }
