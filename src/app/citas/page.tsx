@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Providers'
+import { useConfirm } from '@/components/Providers'
+import BottomNav from '@/components/BottomNav'
+import ServicioSelectorModal from '@/components/ServicioSelectorModal'
 
 function fechaHoy() {
   return new Date().toISOString().split('T')[0]
@@ -44,6 +48,8 @@ export default function CitasPage() {
   const [loadingEdit, setLoadingEdit] = useState(false)
 
   const router = useRouter()
+  const toast = useToast()
+  const confirmar = useConfirm()
 
   useEffect(() => {
     cargarDatos()
@@ -83,7 +89,7 @@ export default function CitasPage() {
       const telLimpio = telCrudo.replace(/\D/g, '').slice(-10)
 
       if (!nombreContacto || !telLimpio) {
-        alert('Ese contacto no tiene nombre o teléfono válido')
+        toast('Ese contacto no tiene nombre o teléfono válido', 'error')
         setImportandoContacto(false)
         return
       }
@@ -104,7 +110,7 @@ export default function CitasPage() {
         .single()
 
       if (errorCliente || !nuevoCliente) {
-        alert('No se pudo crear el cliente desde el contacto')
+        toast('No se pudo crear el cliente desde el contacto', 'error')
         setImportandoContacto(false)
         return
       }
@@ -192,6 +198,7 @@ export default function CitasPage() {
     setHora('')
     setMostrarForm(false)
     setLoading(false)
+    toast('Cita agendada correctamente', 'success')
     cargarDatos()
   }
 
@@ -217,7 +224,7 @@ export default function CitasPage() {
   const enviarWhatsapp = (cita: any) => {
     const telefono = cita.clientes?.telefono?.replace(/\D/g, '')
     if (!telefono) {
-      alert('Este cliente no tiene teléfono registrado')
+      toast('Este cliente no tiene teléfono registrado', 'error')
       return
     }
     const nombresServicios = (cita.cita_servicios || [])
@@ -242,6 +249,12 @@ export default function CitasPage() {
   // Misma lógica que en /facturacion: pide método de pago y marca la cita como facturada
   const facturarCita = async (citaId: string) => {
     if (!metodoPago) return
+    const ok = await confirmar({
+      title: 'Confirmar factura',
+      message: 'Una vez facturada, la cita pasará a tu historial de ingresos y no podrás editarla desde aquí.',
+      confirmText: 'Facturar',
+    })
+    if (!ok) return
     setLoadingFactura(true)
     await supabase
       .from('citas')
@@ -254,6 +267,7 @@ export default function CitasPage() {
     setCitaFacturandoId(null)
     setMetodoPago('')
     setLoadingFactura(false)
+    toast('Cita facturada correctamente', 'success')
     cargarDatos()
   }
 
@@ -341,6 +355,7 @@ export default function CitasPage() {
 
     setCitaEditando(null)
     setLoadingEdit(false)
+    toast('Cambios guardados', 'success')
     cargarDatos()
   }
 
@@ -430,12 +445,6 @@ export default function CitasPage() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}>
       <rect x="5" y="2" width="14" height="20" rx="2" />
       <path d="M12 18h.01" />
-    </svg>
-  )
-  const IconReloj = (p: any) => (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 3" />
     </svg>
   )
 
@@ -546,34 +555,12 @@ export default function CitasPage() {
 
       {/* Modal para elegir servicios (nueva cita) */}
       {mostrarModalServicios && (
-        <div className="fixed inset-0 bg-black/40 flex items-end z-50" onClick={() => setMostrarModalServicios(false)}>
-          <div className="bg-white rounded-t-3xl w-full max-h-[75vh] flex flex-col p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-[#1F1B18] text-lg">Elegir servicios</h3>
-              <button onClick={() => setMostrarModalServicios(false)} className="text-[#8A8378]"><IconClose /></button>
-            </div>
-            <div className="overflow-y-auto space-y-2 flex-1">
-              {servicios.map(s => (
-                <div
-                  key={s.id}
-                  onClick={() => toggleServicio(s.id)}
-                  className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer border-2 transition-all ${serviciosSeleccionados.includes(s.id) ? 'border-[#B08D57] bg-[#F3EDE3]' : 'border-[#EFEAE2] bg-[#FAF8F5]'}`}
-                >
-                  <div>
-                    <p className="font-semibold text-[#1F1B18] text-sm">{s.nombre}</p>
-                    <p className="text-[#8A8378] text-xs">${s.valor.toLocaleString()} · {s.duracion_min} min</p>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${serviciosSeleccionados.includes(s.id) ? 'border-[#B08D57] bg-[#B08D57] text-white' : 'border-[#D8D0C3]'}`}>
-                    {serviciosSeleccionados.includes(s.id) && <IconCheck />}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => setMostrarModalServicios(false)} className="w-full bg-[#1F1B18] text-white py-4 rounded-2xl font-semibold mt-4">
-              Listo ({serviciosSeleccionados.length})
-            </button>
-          </div>
-        </div>
+        <ServicioSelectorModal
+          servicios={servicios}
+          seleccionados={serviciosSeleccionados}
+          onToggle={toggleServicio}
+          onClose={() => setMostrarModalServicios(false)}
+        />
       )}
 
       {/* Modal de Editar cita */}
@@ -652,34 +639,13 @@ export default function CitasPage() {
 
       {/* Modal para elegir servicios (edición) */}
       {mostrarModalServiciosEdit && (
-        <div className="fixed inset-0 bg-black/40 flex items-end z-[60]" onClick={() => setMostrarModalServiciosEdit(false)}>
-          <div className="bg-white rounded-t-3xl w-full max-h-[75vh] flex flex-col p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-[#1F1B18] text-lg">Elegir servicios</h3>
-              <button onClick={() => setMostrarModalServiciosEdit(false)} className="text-[#8A8378]"><IconClose /></button>
-            </div>
-            <div className="overflow-y-auto space-y-2 flex-1">
-              {servicios.map(s => (
-                <div
-                  key={s.id}
-                  onClick={() => toggleServicioEdit(s.id)}
-                  className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer border-2 transition-all ${editServiciosSeleccionados.includes(s.id) ? 'border-[#B08D57] bg-[#F3EDE3]' : 'border-[#EFEAE2] bg-[#FAF8F5]'}`}
-                >
-                  <div>
-                    <p className="font-semibold text-[#1F1B18] text-sm">{s.nombre}</p>
-                    <p className="text-[#8A8378] text-xs">${s.valor.toLocaleString()} · {s.duracion_min} min</p>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${editServiciosSeleccionados.includes(s.id) ? 'border-[#B08D57] bg-[#B08D57] text-white' : 'border-[#D8D0C3]'}`}>
-                    {editServiciosSeleccionados.includes(s.id) && <IconCheck />}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => setMostrarModalServiciosEdit(false)} className="w-full bg-[#1F1B18] text-white py-4 rounded-2xl font-semibold mt-4">
-              Listo ({editServiciosSeleccionados.length})
-            </button>
-          </div>
-        </div>
+        <ServicioSelectorModal
+          servicios={servicios}
+          seleccionados={editServiciosSeleccionados}
+          onToggle={toggleServicioEdit}
+          onClose={() => setMostrarModalServiciosEdit(false)}
+          zIndex={60}
+        />
       )}
 
       {/* Filtros: solo se muestran si NO se está creando una cita */}
@@ -717,7 +683,7 @@ export default function CitasPage() {
             </button>
           </div>
 
-          <div className="px-4 py-4 space-y-3">
+          <div className="px-4 py-4 pb-28 space-y-3">
             {citasMostradas.length === 0 ? (
               <div className="text-center py-20">
                 <div className="w-20 h-20 bg-[#F3EDE3] rounded-3xl flex items-center justify-center mx-auto mb-4 text-[#8A6A3A]">
@@ -827,6 +793,7 @@ export default function CitasPage() {
           </div>
         </>
       )}
+      <BottomNav />
     </div>
   )
 }
