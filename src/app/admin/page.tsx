@@ -11,10 +11,8 @@ export default function AdminPage() {
   const [accionando, setAccionando] = useState<string | null>(null)
   const [tab, setTab] = useState<'activos' | 'pendientes'>('activos')
 
-  // --- Menú de 3 puntos por usuario ---
   const [menuAbiertoId, setMenuAbiertoId] = useState<string | null>(null)
 
-  // --- Editar usuario ---
   const [usuarioEditando, setUsuarioEditando] = useState<any | null>(null)
   const [editNombre, setEditNombre] = useState('')
   const [editTelefono, setEditTelefono] = useState('')
@@ -22,7 +20,6 @@ export default function AdminPage() {
   const [loadingEdit, setLoadingEdit] = useState(false)
   const [errorEdit, setErrorEdit] = useState('')
 
-  // --- Borrar usuario ---
   const [usuarioBorrando, setUsuarioBorrando] = useState<any | null>(null)
   const [loadingBorrado, setLoadingBorrado] = useState(false)
   const [errorBorrado, setErrorBorrado] = useState('')
@@ -31,7 +28,7 @@ export default function AdminPage() {
 
   useEffect(() => { verificarAdmin() }, [])
 
- const verificarAdmin = async () => {
+  const verificarAdmin = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/dashboard'); return }
 
@@ -69,11 +66,10 @@ export default function AdminPage() {
   }
 
   const getColorDias = (dias: number | null) => {
-    if (dias === null) return 'bg-gray-100 text-gray-500'
-    if (dias <= 0) return 'bg-red-100 text-red-600'
-    if (dias <= 2) return 'bg-red-100 text-red-600'
-    if (dias <= 5) return 'bg-yellow-100 text-yellow-600'
-    return 'bg-green-100 text-green-600'
+    if (dias === null) return 'bg-[#F3EDE3] text-[#8A8378]'
+    if (dias <= 2) return 'bg-[#F7E5E2] text-[#8C2F27]'
+    if (dias <= 5) return 'bg-[#F6EEDF] text-[#B08D57]'
+    return 'bg-[#E7F0EC] text-[#2F5D4E]'
   }
 
   const aprobarUsuario = async (userId: string) => {
@@ -144,7 +140,6 @@ export default function AdminPage() {
     setMenuAbiertoId(null)
   }
 
-  // --- Editar usuario ---
   const abrirEdicion = (usuario: any) => {
     setUsuarioEditando(usuario)
     setEditNombre(usuario.nombre || '')
@@ -183,7 +178,6 @@ export default function AdminPage() {
     cargarUsuarios()
   }
 
-  // --- Borrar usuario (completo: datos + cuenta de acceso) ---
   const confirmarBorrado = async () => {
     if (!usuarioBorrando) return
     setLoadingBorrado(true)
@@ -215,54 +209,144 @@ export default function AdminPage() {
   const bloqueados = usuarios.filter(u => u.bloqueado)
   const vencidos = usuarios.filter(u => !u.bloqueado && (getDiasRestantes(u.fecha_vencimiento) || 0) <= 0)
 
+  const IconBack = (p: any) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  )
+  const IconCheck = (p: any) => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+  const IconX = (p: any) => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  )
+  const IconCard = (p: any) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+    </svg>
+  )
+  const IconLock = (p: any) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="4" y="10.5" width="16" height="10" rx="2" />
+      <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+    </svg>
+  )
+  const IconUnlock = (p: any) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="4" y="10.5" width="16" height="10" rx="2" />
+      <path d="M8 10.5V7a4 4 0 0 1 7.5-2" />
+    </svg>
+  )
+  const IconWhatsapp = (p: any) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 20l1-5.5A8.5 8.5 0 1 1 21 11.5z" />
+      <path d="M8.5 10.5c.3 2.5 2.5 4.7 5 5" />
+    </svg>
+  )
+  const IconEdit = (p: any) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </svg>
+  )
+  const IconTrash = (p: any) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" />
+    </svg>
+  )
+  const IconDots = (p: any) => (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="12" cy="5" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="12" cy="19" r="1" />
+    </svg>
+  )
+  const IconWarning = (p: any) => (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M12 9v4M12 17h.01" />
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    </svg>
+  )
+  const IconUsers = (p: any) => (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+      <circle cx="10" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+  const IconCheckCircle = (p: any) => (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  )
+
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-teal-400 border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-[#B08D57] border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => router.push('/dashboard')} className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center">
-            <span className="text-lg">←</span>
+    <div className="min-h-screen bg-[#FAF8F5]">
+      <div className="bg-white px-6 pt-14 pb-6 border-b border-[#EFEAE2]">
+        <div className="flex items-center gap-3 mb-5">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="w-10 h-10 rounded-full border border-[#E7E2DA] flex items-center justify-center text-[#8A8378] hover:text-[#1F1B18] hover:border-[#1F1B18] transition-colors"
+          >
+            <IconBack />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Panel Admin</h1>
-            <p className="text-gray-400 text-sm">Gestión de suscriptores</p>
+            <p className="text-[11px] font-semibold tracking-[0.18em] text-[#B08D57] uppercase">Administración</p>
+            <h1
+              className="text-[22px] leading-tight text-[#1F1B18] mt-0.5"
+              style={{ fontFamily: 'Fraunces, Georgia, serif' }}
+            >
+              Panel de suscriptores
+            </h1>
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          <div className="bg-green-400 rounded-2xl p-3 text-white text-center">
-            <p className="text-2xl font-bold">{activos.length}</p>
-            <p className="text-green-100 text-xs">Activos</p>
+        <div className="grid grid-cols-4 gap-2 mb-5">
+          <div className="bg-[#2F5D4E] rounded-2xl p-3 text-white text-center">
+            <p className="text-xl leading-none" style={{ fontFamily: 'Fraunces, Georgia, serif' }}>{activos.length}</p>
+            <p className="text-[#CFE3DA] text-[10px] mt-1.5 uppercase tracking-wide">Activos</p>
           </div>
-          <div className="bg-yellow-400 rounded-2xl p-3 text-white text-center">
-            <p className="text-2xl font-bold">{vencidos.length}</p>
-            <p className="text-yellow-100 text-xs">Vencidos</p>
+          <div className="bg-[#B08D57] rounded-2xl p-3 text-white text-center">
+            <p className="text-xl leading-none" style={{ fontFamily: 'Fraunces, Georgia, serif' }}>{vencidos.length}</p>
+            <p className="text-[#F3E7D5] text-[10px] mt-1.5 uppercase tracking-wide">Vencidos</p>
           </div>
-          <div className="bg-red-400 rounded-2xl p-3 text-white text-center">
-            <p className="text-2xl font-bold">{bloqueados.length}</p>
-            <p className="text-red-100 text-xs">Bloqueados</p>
+          <div className="bg-[#8C2F27] rounded-2xl p-3 text-white text-center">
+            <p className="text-xl leading-none" style={{ fontFamily: 'Fraunces, Georgia, serif' }}>{bloqueados.length}</p>
+            <p className="text-[#F0D9D6] text-[10px] mt-1.5 uppercase tracking-wide">Bloqueados</p>
           </div>
-          <div className="bg-blue-400 rounded-2xl p-3 text-white text-center">
-            <p className="text-2xl font-bold">{pendientes.length}</p>
-            <p className="text-blue-100 text-xs">Pendientes</p>
+          <div className="bg-[#1F1B18] rounded-2xl p-3 text-white text-center">
+            <p className="text-xl leading-none" style={{ fontFamily: 'Fraunces, Georgia, serif' }}>{pendientes.length}</p>
+            <p className="text-[#A79A8A] text-[10px] mt-1.5 uppercase tracking-wide">Pendientes</p>
           </div>
         </div>
 
         <div className="flex gap-2">
           <button
             onClick={() => setTab('activos')}
-            className={`flex-1 py-2 rounded-2xl text-sm font-semibold ${tab === 'activos' ? 'bg-teal-400 text-white' : 'bg-gray-100 text-gray-500'}`}
+            className={`flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-colors ${
+              tab === 'activos' ? 'bg-[#1F1B18] text-white' : 'bg-[#F3EDE3] text-[#8A8378]'
+            }`}
           >
             Usuarios
           </button>
           <button
             onClick={() => setTab('pendientes')}
-            className={`flex-1 py-2 rounded-2xl text-sm font-semibold ${tab === 'pendientes' ? 'bg-blue-400 text-white' : 'bg-gray-100 text-gray-500'}`}
+            className={`flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-colors ${
+              tab === 'pendientes' ? 'bg-[#1F1B18] text-white' : 'bg-[#F3EDE3] text-[#8A8378]'
+            }`}
           >
             Pendientes {pendientes.length > 0 && `(${pendientes.length})`}
           </button>
@@ -272,33 +356,35 @@ export default function AdminPage() {
       <div className="px-4 py-4 space-y-3">
         {tab === 'pendientes' ? (
           pendientes.length === 0 ? (
-            <div className="text-center py-20">
-              <span className="text-4xl">✅</span>
-              <p className="text-gray-800 font-semibold mt-4">Sin solicitudes pendientes</p>
+            <div className="text-center py-20 text-[#8A6A3A]">
+              <IconCheckCircle className="mx-auto" />
+              <p className="text-[#1F1B18] font-semibold mt-4 text-sm">Sin solicitudes pendientes</p>
             </div>
           ) : (
             pendientes.map((usuario) => (
-              <div key={usuario.id} className="bg-white rounded-3xl px-5 py-4 shadow-sm">
+              <div key={usuario.id} className="bg-white border border-[#EFEAE2] rounded-2xl px-5 py-4">
                 <div className="mb-3">
-                  <p className="font-bold text-gray-800">{usuario.nombre}</p>
-                  <p className="text-gray-400 text-sm">{usuario.email}</p>
-                  <p className="text-gray-400 text-sm">{usuario.telefono || 'Sin teléfono'}</p>
-                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-xl text-xs font-bold mt-1 inline-block">Pendiente de aprobación</span>
+                  <p className="font-semibold text-[#1F1B18] text-sm">{usuario.nombre}</p>
+                  <p className="text-[#8A8378] text-xs mt-0.5">{usuario.email}</p>
+                  <p className="text-[#8A8378] text-xs">{usuario.telefono || 'Sin teléfono'}</p>
+                  <span className="bg-[#F3EDE3] text-[#8A6A3A] px-2.5 py-1 rounded-xl text-[11px] font-semibold mt-2 inline-block">
+                    Pendiente de aprobación
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => aprobarUsuario(usuario.id)}
                     disabled={accionando === usuario.id}
-                    className="flex-1 bg-teal-400 text-white py-2 rounded-2xl text-xs font-bold disabled:opacity-50"
+                    className="flex-1 bg-[#2F5D4E] text-white py-2.5 rounded-2xl text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                   >
-                    ✅ Aprobar
+                    <IconCheck /> Aprobar
                   </button>
                   <button
                     onClick={() => rechazarUsuario(usuario.id)}
                     disabled={accionando === usuario.id}
-                    className="flex-1 bg-red-100 text-red-600 py-2 rounded-2xl text-xs font-bold disabled:opacity-50"
+                    className="flex-1 bg-[#F7E5E2] text-[#8C2F27] py-2.5 rounded-2xl text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                   >
-                    ❌ Rechazar
+                    <IconX /> Rechazar
                   </button>
                 </div>
               </div>
@@ -306,169 +392,15 @@ export default function AdminPage() {
           )
         ) : (
           usuarios.length === 0 ? (
-            <div className="text-center py-20">
-              <span className="text-4xl">👥</span>
-              <p className="text-gray-800 font-semibold mt-4">Sin usuarios registrados</p>
+            <div className="text-center py-20 text-[#8A6A3A]">
+              <IconUsers className="mx-auto" />
+              <p className="text-[#1F1B18] font-semibold mt-4 text-sm">Sin usuarios registrados</p>
             </div>
           ) : (
             usuarios.map((usuario) => {
               const dias = getDiasRestantes(usuario.fecha_vencimiento)
               return (
-                <div key={usuario.id} className="bg-white rounded-3xl px-5 py-4 shadow-sm relative">
+                <div key={usuario.id} className="bg-white border border-[#EFEAE2] rounded-2xl px-5 py-4 relative">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-bold text-gray-800">{usuario.nombre}</p>
-                      <p className="text-gray-400 text-sm">{usuario.email}</p>
-                      <p className="text-gray-400 text-sm">{usuario.telefono || 'Sin teléfono'}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2 relative">
-                      {dias !== null ? (
-                        <span className={`px-3 py-1 rounded-xl text-xs font-bold ${getColorDias(dias)}`}>
-                          {dias <= 0 ? 'Vencido' : `${dias} días`}
-                        </span>
-                      ) : (
-                        <span className="bg-gray-100 text-gray-400 px-3 py-1 rounded-xl text-xs font-bold">Sin fecha</span>
-                      )}
-                      {usuario.bloqueado && <p className="text-red-500 text-xs font-semibold">🔒 Bloqueado</p>}
-
-                      {/* Botón de 3 puntos */}
-                      <button
-                        onClick={() => setMenuAbiertoId(menuAbiertoId === usuario.id ? null : usuario.id)}
-                        className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center active:scale-95 transition-all"
-                      >
-                        <span className="text-gray-600 text-lg font-bold tracking-wider">⋮</span>
-                      </button>
-
-                      {/* Menú desplegable con todas las acciones */}
-                      {menuAbiertoId === usuario.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuAbiertoId(null)} />
-                          <div className="absolute right-0 top-10 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 w-48 z-20">
-                            <button
-                              onClick={() => registrarPago(usuario.id)}
-                              disabled={accionando === usuario.id}
-                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                            >
-                              💳 +30 días
-                            </button>
-                            <button
-                              onClick={() => toggleBloqueo(usuario.id, usuario.bloqueado)}
-                              disabled={accionando === usuario.id}
-                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                            >
-                              {usuario.bloqueado ? '🔓 Habilitar' : '🔒 Bloquear'}
-                            </button>
-                            <button
-                              onClick={() => enviarRecordatorio(usuario)}
-                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                            >
-                              📱 WhatsApp
-                            </button>
-                            <button
-                              onClick={() => abrirEdicion(usuario)}
-                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                            >
-                              ✏️ Editar
-                            </button>
-                            <div className="border-t border-gray-100 my-1" />
-                            <button
-                              onClick={() => { setUsuarioBorrando(usuario); setMenuAbiertoId(null) }}
-                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50"
-                            >
-                              🗑️ Borrar
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })
-          )
-        )}
-      </div>
-
-      {/* Modal de Editar usuario */}
-      {usuarioEditando && (
-        <div className="fixed inset-0 bg-black/40 flex items-end z-50" onClick={() => setUsuarioEditando(null)}>
-          <div className="bg-white rounded-t-3xl w-full p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-800 text-lg">Editar usuario</h3>
-              <button onClick={() => setUsuarioEditando(null)} className="text-2xl text-gray-400">×</button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-semibold text-gray-600 mb-1 block">Nombre</label>
-                <input
-                  type="text"
-                  value={editNombre}
-                  onChange={(e) => setEditNombre(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-600 mb-1 block">Teléfono</label>
-                <input
-                  type="text"
-                  value={editTelefono}
-                  onChange={(e) => setEditTelefono(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-600 mb-1 block">Fecha de vencimiento</label>
-                <input
-                  type="date"
-                  value={editFechaVencimiento}
-                  onChange={(e) => setEditFechaVencimiento(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-400"
-                />
-              </div>
-
-              <p className="text-gray-400 text-xs">El correo no se puede editar aquí porque está ligado a la cuenta de acceso.</p>
-
-              {errorEdit && <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-2xl">{errorEdit}</div>}
-
-              <div className="flex gap-3 pb-2">
-                <button onClick={() => setUsuarioEditando(null)} className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-2xl font-semibold text-sm">
-                  Cancelar
-                </button>
-                <button onClick={guardarEdicionUsuario} disabled={loadingEdit} className="flex-1 bg-teal-400 text-white py-3 rounded-2xl font-semibold text-sm disabled:opacity-50">
-                  {loadingEdit ? 'Guardando...' : 'Guardar cambios'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmación de borrado */}
-      {usuarioBorrando && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-6" onClick={() => setUsuarioBorrando(null)}>
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
-            <p className="text-3xl text-center mb-2">⚠️</p>
-            <h3 className="font-bold text-gray-800 text-lg text-center mb-1">¿Borrar este usuario?</h3>
-            <p className="text-gray-500 text-sm text-center mb-5">
-              Se eliminará <span className="font-semibold">{usuarioBorrando.nombre}</span> ({usuarioBorrando.email}) de forma completa: sus datos y su cuenta de acceso. Esta acción no se puede deshacer.
-            </p>
-            {errorBorrado && <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-2xl mb-4">{errorBorrado}</div>}
-            <div className="flex gap-3">
-              <button onClick={() => setUsuarioBorrando(null)} className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-2xl font-semibold text-sm">
-                Cancelar
-              </button>
-              <button
-                onClick={confirmarBorrado}
-                disabled={loadingBorrado}
-                className="flex-1 bg-red-500 text-white py-3 rounded-2xl font-semibold text-sm disabled:opacity-50"
-              >
-                {loadingBorrado ? 'Borrando...' : 'Sí, borrar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+                      <p
