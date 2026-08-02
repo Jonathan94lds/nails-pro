@@ -403,4 +403,193 @@ export default function AdminPage() {
                 <div key={usuario.id} className="bg-white border border-[#EFEAE2] rounded-2xl px-5 py-4 relative">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p
+                      <p className="font-semibold text-[#1F1B18] text-sm">{usuario.nombre}</p>
+                      <p className="text-[#8A8378] text-xs mt-0.5">{usuario.email}</p>
+                      <p className="text-[#8A8378] text-xs">{usuario.telefono || 'Sin teléfono'}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 relative">
+                      {dias !== null ? (
+                        <span className={`px-3 py-1 rounded-xl text-[11px] font-semibold ${getColorDias(dias)}`}>
+                          {dias <= 0 ? 'Vencido' : `${dias} días`}
+                        </span>
+                      ) : (
+                        <span className="bg-[#F3EDE3] text-[#8A8378] px-3 py-1 rounded-xl text-[11px] font-semibold">Sin fecha</span>
+                      )}
+                      {usuario.bloqueado && (
+                        <p className="text-[#8C2F27] text-[11px] font-semibold flex items-center gap-1">
+                          <IconLock width={12} height={12} /> Bloqueado
+                        </p>
+                      )}
+
+                      <button
+                        onClick={() => setMenuAbiertoId(menuAbiertoId === usuario.id ? null : usuario.id)}
+                        className="w-9 h-9 rounded-full bg-[#F3EDE3] flex items-center justify-center text-[#8A6A3A] active:scale-95 transition-transform"
+                      >
+                        <IconDots />
+                      </button>
+
+                      {menuAbiertoId === usuario.id && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setMenuAbiertoId(null)} />
+                          <div className="absolute right-0 top-11 bg-white rounded-2xl shadow-lg border border-[#EFEAE2] py-2 w-52 z-20">
+                            <button
+                              onClick={() => registrarPago(usuario.id)}
+                              disabled={accionando === usuario.id}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#1F1B18] hover:bg-[#FAF8F5] disabled:opacity-50"
+                            >
+                              <IconCard className="text-[#8A6A3A]" /> +30 días
+                            </button>
+                            <button
+                              onClick={() => toggleBloqueo(usuario.id, usuario.bloqueado)}
+                              disabled={accionando === usuario.id}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#1F1B18] hover:bg-[#FAF8F5] disabled:opacity-50"
+                            >
+                              {usuario.bloqueado ? (
+                                <><IconUnlock className="text-[#8A6A3A]" /> Habilitar</>
+                              ) : (
+                                <><IconLock className="text-[#8A6A3A]" /> Bloquear</>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => enviarRecordatorio(usuario)}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#1F1B18] hover:bg-[#FAF8F5]"
+                            >
+                              <IconWhatsapp className="text-[#8A6A3A]" /> WhatsApp
+                            </button>
+                            <button
+                              onClick={() => abrirEdicion(usuario)}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#1F1B18] hover:bg-[#FAF8F5]"
+                            >
+                              <IconEdit className="text-[#8A6A3A]" /> Editar
+                            </button>
+                            <div className="border-t border-[#EFEAE2] my-1" />
+                            <button
+                              onClick={() => { setUsuarioBorrando(usuario); setMenuAbiertoId(null) }}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#8C2F27] hover:bg-[#F7E5E2]"
+                            >
+                              <IconTrash /> Borrar
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )
+        )}
+      </div>
+
+      {usuarioEditando && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-50" onClick={() => setUsuarioEditando(null)}>
+          <div className="bg-[#FAF8F5] rounded-t-3xl w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3
+                className="text-[20px] text-[#1F1B18]"
+                style={{ fontFamily: 'Fraunces, Georgia, serif' }}
+              >
+                Editar usuario
+              </h3>
+              <button
+                onClick={() => setUsuarioEditando(null)}
+                className="w-9 h-9 rounded-full border border-[#E7E2DA] flex items-center justify-center text-[#8A8378]"
+              >
+                <IconX />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[11px] font-semibold tracking-[0.1em] text-[#8A8378] uppercase mb-1.5 block">Nombre</label>
+                <input
+                  type="text"
+                  value={editNombre}
+                  onChange={(e) => setEditNombre(e.target.value)}
+                  className="w-full bg-white border border-[#E7E2DA] rounded-2xl px-4 py-3 text-[#1F1B18] text-sm focus:outline-none focus:ring-2 focus:ring-[#B08D57]"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold tracking-[0.1em] text-[#8A8378] uppercase mb-1.5 block">Teléfono</label>
+                <input
+                  type="text"
+                  value={editTelefono}
+                  onChange={(e) => setEditTelefono(e.target.value)}
+                  className="w-full bg-white border border-[#E7E2DA] rounded-2xl px-4 py-3 text-[#1F1B18] text-sm focus:outline-none focus:ring-2 focus:ring-[#B08D57]"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold tracking-[0.1em] text-[#8A8378] uppercase mb-1.5 block">Fecha de vencimiento</label>
+                <input
+                  type="date"
+                  value={editFechaVencimiento}
+                  onChange={(e) => setEditFechaVencimiento(e.target.value)}
+                  className="w-full bg-white border border-[#E7E2DA] rounded-2xl px-4 py-3 text-[#1F1B18] text-sm focus:outline-none focus:ring-2 focus:ring-[#B08D57]"
+                />
+              </div>
+
+              <p className="text-[#8A8378] text-xs">El correo no se puede editar aquí porque está ligado a la cuenta de acceso.</p>
+
+              {errorEdit && (
+                <div className="bg-[#F7E5E2] text-[#8C2F27] text-sm px-4 py-3 rounded-2xl">{errorEdit}</div>
+              )}
+
+              <div className="flex gap-3 pb-2 pt-1">
+                <button
+                  onClick={() => setUsuarioEditando(null)}
+                  className="flex-1 bg-[#F3EDE3] text-[#1F1B18] py-3 rounded-2xl font-semibold text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={guardarEdicionUsuario}
+                  disabled={loadingEdit}
+                  className="flex-1 bg-[#1F1B18] text-white py-3 rounded-2xl font-semibold text-sm disabled:opacity-50"
+                >
+                  {loadingEdit ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {usuarioBorrando && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-6" onClick={() => setUsuarioBorrando(null)}>
+          <div className="bg-[#FAF8F5] rounded-3xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-full bg-[#F7E5E2] text-[#8C2F27] flex items-center justify-center mx-auto mb-3">
+              <IconWarning />
+            </div>
+            <h3
+              className="text-[20px] text-[#1F1B18] text-center mb-1.5"
+              style={{ fontFamily: 'Fraunces, Georgia, serif' }}
+            >
+              ¿Borrar este usuario?
+            </h3>
+            <p className="text-[#8A8378] text-sm text-center mb-5 leading-relaxed">
+              Se eliminará <span className="font-semibold text-[#1F1B18]">{usuarioBorrando.nombre}</span> ({usuarioBorrando.email}) de forma completa: sus datos y su cuenta de acceso. Esta acción no se puede deshacer.
+            </p>
+            {errorBorrado && (
+              <div className="bg-[#F7E5E2] text-[#8C2F27] text-sm px-4 py-3 rounded-2xl mb-4">{errorBorrado}</div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setUsuarioBorrando(null)}
+                className="flex-1 bg-[#F3EDE3] text-[#1F1B18] py-3 rounded-2xl font-semibold text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarBorrado}
+                disabled={loadingBorrado}
+                className="flex-1 bg-[#8C2F27] text-white py-3 rounded-2xl font-semibold text-sm disabled:opacity-50"
+              >
+                {loadingBorrado ? 'Borrando...' : 'Sí, borrar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
