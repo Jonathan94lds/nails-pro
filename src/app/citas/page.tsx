@@ -232,7 +232,8 @@ export default function CitasPage() {
       .filter(Boolean)
       .join(', ')
     const hora = new Date(cita.fecha_inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-    const mensaje = `Hola 👋 Te recordamos tu cita para ${nombresServicios || 'tu servicio'} hoy a las ${hora}. ¡Te esperamos!`
+    const fechaTexto = new Date(cita.fecha_inicio).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })
+    const mensaje = `Hola, te recordamos tu cita para ${nombresServicios || 'tu servicio'} programada para el ${fechaTexto} a las ${hora}. ¡Nos vemos pronto!`
     window.open(`https://wa.me/57${telefono}?text=${encodeURIComponent(mensaje)}`, '_blank')
     setMenuAbiertoId(null)
   }
