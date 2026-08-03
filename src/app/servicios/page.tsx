@@ -153,7 +153,7 @@ export default function ServiciosPage() {
             />
             <MoneyInput
               value={valor}
-              onChange={setValor}
+              onChange={(val) => setValor(String(val))}
               placeholder="Precio (ej: 25.000)"
               className={inputClass}
             />

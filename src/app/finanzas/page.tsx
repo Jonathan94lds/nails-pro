@@ -455,7 +455,7 @@ export default function FinanzasPage() {
               />
               <MoneyInput
                 value={valorGasto}
-                onChange={setValorGasto}
+                onChange={(val) => setValorGasto(String(val))}
                 placeholder="Valor"
                 className={inputClassGasto}
               />
