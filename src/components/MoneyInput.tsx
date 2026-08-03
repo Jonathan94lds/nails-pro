@@ -31,7 +31,7 @@ export default function MoneyInput({ value, onChange, className = '', ...props }
         value={formatNumber(value)}
         onChange={handleChange}
         {...props}
-        className="w-full bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl py-4 pr-4 pl-10 text-[#1F1B18] placeholder:text-[#B4AC9E] focus:outline-none focus:ring-2 focus:ring-[#B08D57]/40 focus:border-[#B08D57]"
+        className={`w-full bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl py-4 pr-4 pl-10 text-[#1F1B18] placeholder:text-[#B4AC9E] focus:outline-none focus:ring-2 focus:ring-[#B08D57]/40 focus:border-[#B08D57] ${className}`.trim()}
       />
     </div>
   );

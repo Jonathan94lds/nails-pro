@@ -118,7 +118,7 @@ export default function CitasPage() {
       setClientes(prev => [...prev, nuevoCliente].sort((a, b) => a.nombre.localeCompare(b.nombre)))
       setClienteId(nuevoCliente.id)
       setImportandoContacto(false)
-    } catch (err) {
+    } catch {
       setImportandoContacto(false)
     }
   }
@@ -391,11 +391,6 @@ export default function CitasPage() {
   const IconChevron = (p: any) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
       <path d="M9 6l6 6-6 6" />
-    </svg>
-  )
-  const IconCheck = (p: any) => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}>
-      <path d="M20 6L9 17l-5-5" />
     </svg>
   )
   const IconCitas = (p: any) => (
