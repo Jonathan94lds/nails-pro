@@ -12,28 +12,29 @@ export default function NotificacionesPage() {
   const router = useRouter()
   const toast = useToast()
 
-  useEffect(() => { cargarCitas() }, [fecha])
+  useEffect(() => {
+    async function cargarCitas() {
+      setCargando(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
 
-  const cargarCitas = async () => {
-    setCargando(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
+      const inicio = new Date(`${fecha}T00:00:00`).toISOString()
+      const fin = new Date(`${fecha}T23:59:59`).toISOString()
 
-    const inicio = new Date(`${fecha}T00:00:00`).toISOString()
-    const fin = new Date(`${fecha}T23:59:59`).toISOString()
+      const { data } = await supabase
+        .from('citas')
+        .select('*, clientes(nombre, telefono), cita_servicios(servicios(nombre))')
+        .eq('empresa_id', user.id)
+        .eq('estado', 'pendiente')
+        .gte('fecha_inicio', inicio)
+        .lte('fecha_inicio', fin)
+        .order('fecha_inicio')
 
-    const { data } = await supabase
-      .from('citas')
-      .select('*, clientes(nombre, telefono), cita_servicios(servicios(nombre))')
-      .eq('empresa_id', user.id)
-      .eq('estado', 'pendiente')
-      .gte('fecha_inicio', inicio)
-      .lte('fecha_inicio', fin)
-      .order('fecha_inicio')
-
-    setCitas(data || [])
-    setCargando(false)
-  }
+      setCitas(data || [])
+      setCargando(false)
+    }
+    cargarCitas()
+  }, [fecha, router])
 
   const formatHora = (f: string) => {
     return new Date(f).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })

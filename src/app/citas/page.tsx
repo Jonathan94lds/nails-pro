@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Providers'
@@ -51,17 +51,7 @@ export default function CitasPage() {
   const toast = useToast()
   const confirmar = useConfirm()
 
-  useEffect(() => {
-    cargarDatos()
-    // El selector de contactos del celular (Contact Picker API) solo existe
-    // hoy en día en Chrome para Android. En iPhone/otros navegadores no
-    // aparece 'contacts' en navigator, así que el botón simplemente no se muestra.
-    if (typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window) {
-      setContactosSoportado(true)
-    }
-  }, [])
-
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
     const [{ data: citasData }, { data: clientesData }, { data: serviciosData }] = await Promise.all([
@@ -72,7 +62,17 @@ export default function CitasPage() {
     setCitas(citasData || [])
     setClientes(clientesData || [])
     setServicios(serviciosData || [])
-  }
+  }, [router])
+
+  useEffect(() => {
+    cargarDatos()
+    // El selector de contactos del celular (Contact Picker API) solo existe
+    // hoy en día en Chrome para Android. En iPhone/otros navegadores no
+    // aparece 'contacts' en navigator, así que el botón simplemente no se muestra.
+    if (typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window) {
+      setContactosSoportado(true)
+    }
+  }, [cargarDatos])
 
   // Abre el selector nativo de contactos del celular (solo Android/Chrome).
   // Si el número ya existe entre los clientes, selecciona ese cliente.

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -16,9 +16,7 @@ export default function FacturacionPage() {
   const [fechaFiltro, setFechaFiltro] = useState(fechaHoy())
   const router = useRouter()
 
-  useEffect(() => { cargarCitas() }, [fechaFiltro])
-
-  const cargarCitas = async () => {
+  const cargarCitas = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
@@ -35,7 +33,9 @@ export default function FacturacionPage() {
       .order('fecha_inicio')
 
     setCitas(data || [])
-  }
+  }, [fechaFiltro, router])
+
+  useEffect(() => { cargarCitas() }, [cargarCitas])
 
   const facturar = async (citaId: string) => {
     if (!metodoPago) return

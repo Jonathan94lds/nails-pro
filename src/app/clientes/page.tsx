@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Providers'
@@ -18,9 +18,7 @@ export default function ClientesPage() {
   const router = useRouter()
   const toast = useToast()
 
-  useEffect(() => { cargarClientes() }, [])
-
-  const cargarClientes = async () => {
+  const cargarClientes = useCallback(async () => {
     setCargandoLista(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
@@ -31,7 +29,9 @@ export default function ClientesPage() {
       .order('nombre')
     setClientes(data || [])
     setCargandoLista(false)
-  }
+  }, [router])
+
+  useEffect(() => { cargarClientes() }, [cargarClientes])
 
   const agregarCliente = async () => {
     if (!nombre.trim()) return

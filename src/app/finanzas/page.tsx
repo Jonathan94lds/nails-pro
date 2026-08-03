@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Providers'
@@ -44,9 +44,6 @@ export default function FinanzasPage() {
   const router = useRouter()
   const toast = useToast()
 
-  useEffect(() => { cargarDatos() }, [periodo])
-  useEffect(() => { cargarDashboard(); cargarCategorias() }, [])
-
   const getRango = () => {
     const ahora = new Date()
     let inicio: Date
@@ -68,7 +65,7 @@ export default function FinanzasPage() {
     return { inicio: inicio.toISOString(), fin: ahora.toISOString() }
   }
 
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
@@ -86,12 +83,13 @@ export default function FinanzasPage() {
     setListaGastos(gastosData || [])
     setIngresos(totalIngresos)
     setGastos(totalGastos)
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodo, router])
 
   // Trae las citas facturadas del mes actual y del mes anterior, y saca
   // los datos destacados: crecimiento vs mes anterior, servicio más
   // vendido, cliente más frecuente y día más ocupado.
-  const cargarDashboard = async () => {
+  const cargarDashboard = useCallback(async () => {
     setCargandoDashboard(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -154,10 +152,10 @@ export default function FinanzasPage() {
     setDiaTop(topDia ? { nombre: topDia[0], veces: topDia[1] } : null)
 
     setCargandoDashboard(false)
-  }
+  }, [])
 
   // --- Categorías de gastos ---
-  const cargarCategorias = async () => {
+  const cargarCategorias = useCallback(async () => {
     setCargandoCategorias(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -180,7 +178,10 @@ export default function FinanzasPage() {
       if (listaCreadas[0]) setCategoriaSeleccionada(listaCreadas[0].nombre)
     }
     setCargandoCategorias(false)
-  }
+  }, [])
+
+  useEffect(() => { cargarDatos() }, [cargarDatos])
+  useEffect(() => { cargarDashboard(); cargarCategorias() }, [cargarDashboard, cargarCategorias])
 
   const agregarCategoria = async () => {
     if (!nuevaCategoria.trim()) return

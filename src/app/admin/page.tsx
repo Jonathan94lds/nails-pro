@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -26,9 +26,19 @@ export default function AdminPage() {
 
   const router = useRouter()
 
-  useEffect(() => { verificarAdmin() }, [])
+  const cargarUsuarios = useCallback(async () => {
+    const { data } = await supabase
+      .from('empresas')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-  const verificarAdmin = async () => {
+    const todos = data || []
+    setUsuarios(todos.filter(u => u.estado !== 'pendiente'))
+    setPendientes(todos.filter(u => u.estado === 'pendiente'))
+    setLoading(false)
+  }, [])
+
+  const verificarAdmin = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/dashboard'); return }
 
@@ -43,19 +53,9 @@ export default function AdminPage() {
       return
     }
     cargarUsuarios()
-  }
+  }, [router, cargarUsuarios])
 
-  const cargarUsuarios = async () => {
-    const { data } = await supabase
-      .from('empresas')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    const todos = data || []
-    setUsuarios(todos.filter(u => u.estado !== 'pendiente'))
-    setPendientes(todos.filter(u => u.estado === 'pendiente'))
-    setLoading(false)
-  }
+  useEffect(() => { verificarAdmin() }, [verificarAdmin])
 
   const getDiasRestantes = (fechaVencimiento: string) => {
     if (!fechaVencimiento) return null

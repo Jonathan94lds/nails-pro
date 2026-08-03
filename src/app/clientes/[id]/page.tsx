@@ -35,38 +35,37 @@ export default function HistorialClientePage() {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
+    async function cargarDatos() {
+      setCargando(true)
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+
+      const { data: clienteData } = await supabase
+        .from('clientes')
+        .select('id, nombre, telefono')
+        .eq('id', clienteId)
+        .single()
+
+      const { data: citasData } = await supabase
+        .from('citas')
+        .select(`
+          id, fecha_inicio, valor_total, estado, metodo_pago,
+          cita_servicios (
+            valor_snapshot,
+            duracion_snapshot,
+            servicios ( nombre )
+          )
+        `)
+        .eq('cliente_id', clienteId)
+        .order('fecha_inicio', { ascending: false })
+
+      setCliente(clienteData)
+      setCitas((citasData as any) || [])
+      setCargando(false)
+    }
     cargarDatos()
-  }, [clienteId])
-
-  async function cargarDatos() {
-    setCargando(true)
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
-
-    const { data: clienteData } = await supabase
-      .from('clientes')
-      .select('id, nombre, telefono')
-      .eq('id', clienteId)
-      .single()
-
-    const { data: citasData } = await supabase
-      .from('citas')
-      .select(`
-        id, fecha_inicio, valor_total, estado, metodo_pago,
-        cita_servicios (
-          valor_snapshot,
-          duracion_snapshot,
-          servicios ( nombre )
-        )
-      `)
-      .eq('cliente_id', clienteId)
-      .order('fecha_inicio', { ascending: false })
-
-    setCliente(clienteData)
-    setCitas((citasData as any) || [])
-    setCargando(false)
-  }
+  }, [clienteId, router])
 
   const totalCitas = citas.length
   const ultimaVisita = citas.length > 0 ? citas[0].fecha_inicio : null
