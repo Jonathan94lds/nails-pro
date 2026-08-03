@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Providers'
 
 export default function AdminPage() {
   const [usuarios, setUsuarios] = useState<any[]>([])
@@ -25,6 +26,7 @@ export default function AdminPage() {
   const [errorBorrado, setErrorBorrado] = useState('')
 
   const router = useRouter()
+  const toast = useToast()
 
   const cargarUsuarios = useCallback(async () => {
     const { data } = await supabase
@@ -128,7 +130,7 @@ export default function AdminPage() {
 
   const enviarRecordatorio = (usuario: any) => {
     const telefono = usuario.telefono?.replace(/\D/g, '')
-    if (!telefono) { alert('Este usuario no tiene teléfono registrado'); return }
+    if (!telefono) { toast('Este usuario no tiene teléfono registrado', 'error'); return }
     const dias = getDiasRestantes(usuario.fecha_vencimiento)
     let mensaje = ''
     if (dias !== null && dias <= 0) {
