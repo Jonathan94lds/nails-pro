@@ -41,6 +41,9 @@ export default function HistorialClientePage() {
   async function cargarDatos() {
     setCargando(true)
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/login'); return }
+
     const { data: clienteData } = await supabase
       .from('clientes')
       .select('id, nombre, telefono')
@@ -73,95 +76,108 @@ export default function HistorialClientePage() {
 
   const colorEstado = (estado: string) => {
     switch (estado) {
-      case 'pendiente': return 'bg-yellow-100 text-yellow-600'
-      case 'confirmada': return 'bg-blue-100 text-blue-600'
-      case 'facturada': return 'bg-green-100 text-green-600'
-      case 'cancelada': return 'bg-red-100 text-red-600'
-      default: return 'bg-gray-100 text-gray-600'
+      case 'pendiente': return 'bg-[#F6EEDF] text-[#B08D57]'
+      case 'confirmada': return 'bg-[#E7F0EC] text-[#2F5D4E]'
+      case 'facturada': return 'bg-[#E7F0EC] text-[#2F5D4E]'
+      case 'cancelada': return 'bg-[#F7E5E2] text-[#8C2F27]'
+      default: return 'bg-[#F3EDE3] text-[#8A8378]'
     }
   }
 
+  // Íconos de línea, mismo lenguaje visual del resto de la app
+  const IconBack = (p: any) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  )
+  const IconEmpty = (p: any) => (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="3" y="4.5" width="18" height="16" rx="2" />
+      <path d="M16 2.5v4M8 2.5v4M3 9.5h18" />
+    </svg>
+  )
+
   if (cargando) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">Cargando...</p>
+      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#B08D57] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!cliente) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">Cliente no encontrado</p>
+      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+        <p className="text-[#8A8378] text-sm">Cliente no encontrado</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
-      <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
+    <div className="min-h-screen bg-[#FAF8F5] pb-10">
+      <div className="bg-white px-6 pt-12 pb-6 border-b border-[#EFEAE2]">
+        <div className="flex items-center gap-3 mb-5">
           <button
             onClick={() => router.push('/clientes')}
-            className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center"
+            className="w-10 h-10 rounded-full border border-[#E7E2DA] flex items-center justify-center text-[#8A8378] hover:text-[#1F1B18] hover:border-[#1F1B18] transition-colors"
           >
-            <span className="text-2xl font-bold">←</span>
+            <IconBack />
           </button>
-          <div className="bg-teal-400 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm">
-            <span className="text-white font-bold text-lg">
+          <div className="w-12 h-12 rounded-2xl bg-[#1F1B18] flex items-center justify-center text-[#B08D57]">
+            <span className="font-semibold text-lg" style={{ fontFamily: 'Fraunces, Georgia, serif' }}>
               {cliente.nombre.charAt(0).toUpperCase()}
             </span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{cliente.nombre}</h1>
-            <p className="text-gray-400 text-sm">{cliente.telefono || 'Sin teléfono'}</p>
+            <h1 className="text-[20px] text-[#1F1B18] leading-tight" style={{ fontFamily: 'Fraunces, Georgia, serif' }}>
+              {cliente.nombre}
+            </h1>
+            <p className="text-[#8A8378] text-sm">{cliente.telefono || 'Sin teléfono'}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-teal-50 rounded-2xl px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-teal-600">{totalCitas}</p>
-            <p className="text-teal-500 text-xs font-medium">Citas totales</p>
+          <div className="bg-[#F3EDE3] rounded-2xl px-4 py-3 text-center">
+            <p className="text-xl font-semibold text-[#1F1B18]" style={{ fontFamily: 'Fraunces, Georgia, serif' }}>{totalCitas}</p>
+            <p className="text-[#8A6A3A] text-xs font-medium mt-0.5">Citas totales</p>
           </div>
-          <div className="bg-purple-50 rounded-2xl px-4 py-3 text-center">
-            <p className="text-sm font-bold text-purple-600">
+          <div className="bg-[#F3EDE3] rounded-2xl px-4 py-3 text-center">
+            <p className="text-sm font-semibold text-[#1F1B18] mt-1">
               {ultimaVisita ? formatFecha(ultimaVisita) : 'Sin visitas'}
             </p>
-            <p className="text-purple-400 text-xs font-medium">Última visita</p>
+            <p className="text-[#8A6A3A] text-xs font-medium mt-0.5">Última visita</p>
           </div>
         </div>
       </div>
 
       <div className="px-4 py-4 space-y-3">
-        <p className="text-gray-500 font-semibold text-sm px-1">Historial de citas</p>
+        <p className="text-[11px] font-semibold tracking-[0.18em] text-[#8A8378] uppercase px-1">Historial de citas</p>
 
         {citas.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-teal-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-4xl">📋</span>
-            </div>
-            <p className="text-gray-800 font-semibold">Sin citas registradas</p>
-            <p className="text-gray-400 text-sm mt-1">Este cliente aún no tiene historial</p>
+          <div className="text-center py-20 text-[#8A6A3A]">
+            <IconEmpty className="mx-auto" />
+            <p className="text-[#1F1B18] font-semibold mt-4 text-sm">Sin citas registradas</p>
+            <p className="text-[#8A8378] text-sm mt-1">Este cliente aún no tiene historial</p>
           </div>
         ) : (
           citas.map((cita) => (
-            <div key={cita.id} className="bg-white rounded-3xl px-5 py-4 shadow-sm">
+            <div key={cita.id} className="bg-white border border-[#EFEAE2] rounded-3xl px-5 py-4">
               <div className="flex items-start justify-between mb-2">
-                <p className="font-bold text-gray-800">{formatFecha(cita.fecha_inicio)}</p>
-                <span className={`px-3 py-1 rounded-xl text-xs font-bold ${colorEstado(cita.estado)}`}>
+                <p className="font-semibold text-[#1F1B18] text-sm">{formatFecha(cita.fecha_inicio)}</p>
+                <span className={`px-3 py-1 rounded-xl text-[11px] font-semibold capitalize ${colorEstado(cita.estado)}`}>
                   {cita.estado}
                 </span>
               </div>
               <div className="space-y-1 mb-3">
                 {cita.cita_servicios.map((cs, i) => (
-                  <p key={i} className="text-gray-500 text-sm">
+                  <p key={i} className="text-[#8A8378] text-sm">
                     • {cs.servicios?.nombre || 'Servicio'} — ${cs.valor_snapshot.toLocaleString('es-CO')}
                   </p>
                 ))}
               </div>
-              <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                <p className="text-gray-400 text-xs">{cita.metodo_pago || 'Sin método de pago'}</p>
-                <p className="font-bold text-teal-500 text-lg">${cita.valor_total.toLocaleString('es-CO')}</p>
+              <div className="flex justify-between items-center pt-3 border-t border-[#F3EDE3]">
+                <p className="text-[#8A8378] text-xs">{cita.metodo_pago || 'Sin método de pago'}</p>
+                <p className="font-semibold text-[#8A6A3A] text-lg">${cita.valor_total.toLocaleString('es-CO')}</p>
               </div>
             </div>
           ))
