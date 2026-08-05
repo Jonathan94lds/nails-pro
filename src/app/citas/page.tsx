@@ -706,8 +706,7 @@ const citasDelDia = citas.filter(c => fechaLocal(c.fecha_inicio) === fechaFiltro
                     <div>
                       <p className="font-semibold text-[#1F1B18]">{cita.clientes?.nombre}</p>
                       <p className="text-[#8A8378] text-sm mt-1">{formatFecha(cita.fecha_inicio)}</p>
-                      <p className="text-[#8A6A3A] font-semibold text-sm mt-1">${cita.valor_total?.toLocaleString()} · {cita.duracion_total} min</p>
-                    </div>
+<p className="text-[#8A6A3A] font-semibold text-sm mt-1">${cita.valor_total?.toLocaleString()} · Duración: {cita.duracion_total} min</p>                    </div>
                     <div className="flex flex-col items-end gap-2 relative">
                       <span className={`px-3 py-1 rounded-xl text-xs font-semibold ${colorEstado(cita.estado)}`}>
                         {cita.estado}
