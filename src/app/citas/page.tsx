@@ -521,7 +521,7 @@ export default function CitasPage() {
 
           {serviciosSeleccionados.length > 0 && (
             <div className="bg-[#F3EDE3] rounded-2xl p-4">
-              <p className="text-[#8A6A3A] font-semibold text-sm">Total: ${valorTotal.toLocaleString()} · {duracionTotal} min</p>
+              <p className="text-[#8A6A3A] font-semibold text-sm">Total: ${valorTotal.toLocaleString()} · Duración: {duracionTotal} min</p>
             </div>
           )}
 
