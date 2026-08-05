@@ -470,7 +470,7 @@ export default function CitasPage() {
       </div>
 
       {mostrarForm && (
-        <div className="mx-4 mt-4 bg-white border border-[#EFEAE2] rounded-3xl p-5 space-y-4">
+        <div className="mx-4 mt-4 mb-28 bg-white border border-[#EFEAE2] rounded-3xl p-5 space-y-4">
           <h2 className="font-semibold text-[#1F1B18]">Nueva cita</h2>
           <div>
             <label className={labelClass}>Cliente</label>
