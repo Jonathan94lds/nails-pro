@@ -286,7 +286,7 @@ export default function CitasPage() {
     setEditClienteId(cita.cliente_id)
     setEditServiciosSeleccionados((cita.cita_servicios || []).map((cs: any) => cs.servicio_id).filter(Boolean))
     const fechaObj = new Date(cita.fecha_inicio)
-    setEditFecha(fechaObj.toISOString().split('T')[0])
+    setEditFecha(fechaLocal(fechaObj))
     setEditHora(fechaObj.toTimeString().slice(0, 5))
     setErrorEdit('')
     setMenuAbiertoId(null)
