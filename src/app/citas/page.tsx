@@ -8,8 +8,16 @@ import { useConfirm } from '@/components/Providers'
 import BottomNav from '@/components/BottomNav'
 import ServicioSelectorModal from '@/components/ServicioSelectorModal'
 
+function fechaLocal(fecha: Date | string) {
+  const d = typeof fecha === 'string' ? new Date(fecha) : fecha
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function fechaHoy() {
-  return new Date().toISOString().split('T')[0]
+  return fechaLocal(new Date())
 }
 
 export default function CitasPage() {
@@ -360,11 +368,10 @@ export default function CitasPage() {
     cargarDatos()
   }
 
-  const citasDelDia = citas.filter(c => c.fecha_inicio.split('T')[0] === fechaFiltro)
-
+const citasDelDia = citas.filter(c => fechaLocal(c.fecha_inicio) === fechaFiltro)
   const citasPendientesFuturas = citas
-    .filter(c => c.estado === 'pendiente' && c.fecha_inicio.split('T')[0] >= fechaHoy())
-    .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio))
+  .filter(c => c.estado === 'pendiente' && fechaLocal(c.fecha_inicio) >= fechaHoy())
+  .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio))
 
   const citasMostradas = verTodasPendientes ? citasPendientesFuturas : citasDelDia
 
